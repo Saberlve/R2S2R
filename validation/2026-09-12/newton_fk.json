@@ -1,0 +1,12 @@
+{
+  "episodes": [
+    {
+      "episode": 0,
+      "frames": 489,
+      "max_position_mm": 0.0007646496399813093,
+      "max_rotation_deg": 4.690122041683305e-05
+    }
+  ],
+  "max_position_mm": 0.0007646496399813093,
+  "max_rotation_deg": 4.690122041683305e-05
+}

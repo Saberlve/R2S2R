@@ -1,0 +1,135 @@
+{
+  "schema_version": "1.0",
+  "scene_id": "HistoricalAzureFit",
+  "world": {
+    "length_unit": "m",
+    "up_axis": "Z",
+    "handedness": "right"
+  },
+  "assets": [
+    {
+      "id": "TableTop",
+      "role": "table",
+      "kind": "box",
+      "size_m": [
+        1.2,
+        1.6,
+        0.027631577104330063
+      ],
+      "T_world_object": [
+        [
+          0.9999012351036072,
+          -0.013497821986675262,
+          -0.003910853061825037,
+          -0.1953885853290558
+        ],
+        [
+          0.013478416018188,
+          0.9998969435691833,
+          -0.004946648608893156,
+          -0.17838770151138306
+        ],
+        [
+          0.003977218642830849,
+          0.004893448203802109,
+          0.999980092048645,
+          0.7891086339950562
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "closed_required": true,
+      "confidence": "model",
+      "color_linear": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    }
+  ],
+  "cameras": [
+    {
+      "id": "Azure",
+      "blender_object": "Azure",
+      "serial": "unknown-historical",
+      "native_wh": [
+        1280,
+        720
+      ],
+      "K_native": [
+        [
+          364.52484130859375,
+          0,
+          640
+        ],
+        [
+          0,
+          364.52484130859375,
+          360
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "distortion": {
+        "model": "none",
+        "coefficients": []
+      },
+      "T_world_optical": [
+        [
+          0.9989818930625916,
+          0.042742446064949036,
+          0.014426912181079388,
+          -0.13916651904582977
+        ],
+        [
+          -0.007562037091702223,
+          -0.15661531686782837,
+          0.9876307249069214,
+          -0.5616689324378967
+        ],
+        [
+          0.044473227113485336,
+          -0.9867343306541443,
+          -0.15613266825675964,
+          1.2456365823745728
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "quality": "estimated",
+      "evidence": "Historical scene and manual annotations; no factory K",
+      "pixel_ops": {}
+    }
+  ],
+  "lights": [
+    {
+      "id": "KeyLight",
+      "position_m": [
+        0.3,
+        -0.3,
+        1.8
+      ],
+      "power_W": 100,
+      "size_m": 0.8,
+      "color_linear": [
+        1,
+        1,
+        1
+      ]
+    }
+  ],
+  "world_strength": 0.1,
+  "excluded_entities": [],
+  "notes": "Synthetic smoke test only. Replace with measured scene values."
+}

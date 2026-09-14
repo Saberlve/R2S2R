@@ -1,0 +1,9 @@
+{
+  "main_python": "/home/wangshuxun/VLA/data_sim/Data-MechanicSim/.venv/bin/python",
+  "cycles_python": "/home/wangshuxun/VLA/data_sim/Data-MechanicSim/render_cycles/.venv/bin/python",
+  "ffmpeg": "/home/wangshuxun/miniconda3/bin/ffmpeg",
+  "newton_project": "/home/wangshuxun/VLA/data_sim/Data-MechanicSim",
+  "measured_case": "/run/determined/NAS1/public/wangshuxun/r2s2r_resources/real2sim/MeasuredBarGraspV1",
+  "reference_template": "/run/determined/NAS1/public/wangshuxun/r2s2r_resources/real2sim/WristCameraAlignmentV1/runtime",
+  "runs_root": "/run/determined/NAS1/public/wangshuxun/r2s2r_resources/real2sim/server_runs"
+}

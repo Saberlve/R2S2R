@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "variables": {
+    "cycles_python": "/absolute/path/to/python-with-bpy"
+  },
+  "stages": [
+    {
+      "id": "validate",
+      "requires": [],
+      "argv": [
+        "validate",
+        "{plan_dir}/scene.json"
+      ],
+      "outputs": []
+    },
+    {
+      "id": "build",
+      "requires": [
+        "validate"
+      ],
+      "argv": [
+        "build",
+        "--scene",
+        "{plan_dir}/scene.json",
+        "--out",
+        "{run}/scene.blend",
+        "--python",
+        "{cycles_python}"
+      ],
+      "outputs": [
+        "{run}/scene.blend",
+        "{run}/scene.audit.json"
+      ]
+    },
+    {
+      "id": "render",
+      "requires": [
+        "build"
+      ],
+      "argv": [
+        "render",
+        "--scene",
+        "{plan_dir}/scene.json",
+        "--blend",
+        "{run}/scene.blend",
+        "--out",
+        "{run}/render",
+        "--python",
+        "{cycles_python}",
+        "--samples",
+        "8"
+      ],
+      "outputs": [
+        "{run}/render/render_manifest.json"
+      ]
+    }
+  ]
+}

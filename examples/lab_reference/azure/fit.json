@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "scene": "scene.json",
+  "camera_id": "Azure",
+  "annotations": "annotations.json",
+  "search": {
+    "focal_bounds_px": [
+      480,
+      850
+    ],
+    "position_bounds_m": [
+      [
+        -2,
+        -2,
+        0.85
+      ],
+      [
+        1.5,
+        1.5,
+        2.4
+      ]
+    ],
+    "rotation_bound_rad": 0.65,
+    "starts": 40,
+    "seed": 24,
+    "max_nfev": 450,
+    "focal_prior_px": 640,
+    "focal_prior_log_sigma": 0.25,
+    "rotation_prior_rad": 1,
+    "point_sigma_px": 6,
+    "line_sigma_px": 4
+  }
+}

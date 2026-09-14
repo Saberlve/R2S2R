@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "real2sim-pipeline"
+version = "0.4.0"
+description = "Measured scene reconstruction, camera contracts, reproducible rendering and robot validation"
+requires-python = ">=3.10"
+dependencies = ["numpy", "scipy", "Pillow", "jsonschema"]
+[project.optional-dependencies]
+calibration = ["opencv-python-headless"]
+metrics = ["scikit-image"]
+dataset = ["pyarrow"]
+test = ["pytest"]
+[project.scripts]
+r2s = "real2sim.cli:main"
+[tool.setuptools.packages.find]
+where = ["src"]
+[tool.setuptools.package-data]
+real2sim = ["schemas/*.json", "workers/*.py", "adapters/xarm7/*.py"]
+[tool.pytest.ini_options]
+pythonpath = ["src"]

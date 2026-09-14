@@ -1,0 +1,11 @@
+# Observed environment, not an installer for local edited sources.
+Cython==3.3.0
+bpy==4.5.12
+certifi==2026.7.22
+charset-normalizer==3.5.1
+idna==3.19
+numpy==1.26.4
+pillow==12.3.0
+requests==2.34.2
+urllib3==2.7.0
+zstandard==0.25.0

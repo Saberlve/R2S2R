@@ -1,0 +1,5 @@
+{
+  "src/real2sim/cases.py": "48c93e73feac7e09ab027736733312906cdf9f83acbe125a0451f4cd6ec75d5c",
+  "src/real2sim/cli.py": "41c1e433ea0d6b25bb6ee425be5be5bd4f442a34d2c63b232f401635c6134e1e",
+  "tests/test_cases.py": "09ca46d8a454ed6d77267f7b53a244ccf5ff9d33f748aa401c117b36a73f3a82"
+}

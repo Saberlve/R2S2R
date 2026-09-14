@@ -1,0 +1,9 @@
+{
+  "main_python": "/absolute/path/to/main_python",
+  "cycles_python": "/absolute/path/to/cycles_python",
+  "ffmpeg": "/absolute/path/to/ffmpeg",
+  "newton_project": "/absolute/path/to/newton_project",
+  "measured_case": "/absolute/path/to/measured_case",
+  "reference_template": "/absolute/path/to/reference_template",
+  "runs_root": "/absolute/path/to/runs_root"
+}

@@ -1,0 +1,95 @@
+{
+  "fixture": "synthetic minimal 160x120 CPU Cycles 2 samples",
+  "changed_code_invalidated_previous_attempt": true,
+  "paused_before_review": "needs_review",
+  "cached_render_on_resume": true,
+  "after_synthetic_test_approval": "complete",
+  "freeze_cached_next_run": true,
+  "human_approval": false,
+  "physical_validation": false,
+  "status": {
+    "status": "complete",
+    "stages": {
+      "scene_ready": {
+        "fingerprint": "322321b64ec4d2af24aa404f1d35d48b33dd5fcc7a09f987cf79188b8288b892",
+        "kind": "files",
+        "status": "passed",
+        "cached": true
+      },
+      "validate": {
+        "fingerprint": "295b0b1b824efc1ff49294ef1f4a54f522b9f49a2c0dc1d5e317591f8cb60277",
+        "kind": "command",
+        "attempt": "/home/wangshuxun/VLA/data_sim/real2sim-pipeline/runs/case_workflow_validation/runs/validate/3eed194049ba4ef891ab81bcbd9537b5",
+        "output_hashes": {
+          "/home/wangshuxun/VLA/data_sim/real2sim-pipeline/runs/case_workflow_validation/runs/validate/3eed194049ba4ef891ab81bcbd9537b5/stage.log": "9507f6bdd09080c8f8a9e432ff94d259c584f5a67d7d243995d8fe9b8d814700"
+        },
+        "status": "passed",
+        "cached": true
+      },
+      "build": {
+        "fingerprint": "cc8a1457b25c2b7bc62923577f76cf8243c2dbc7b5198a73e4808ee2b1c13a7a",
+        "kind": "command",
+        "attempt": "/home/wangshuxun/VLA/data_sim/real2sim-pipeline/runs/case_workflow_validation/runs/build/ec7e4d35ef144d508489fd4cc4eee86a",
+        "output_hashes": {
+          "/home/wangshuxun/VLA/data_sim/real2sim-pipeline/runs/case_workflow_validation/runs/build/ec7e4d35ef144d508489fd4cc4eee86a/scene.blend": "21a9c3f5e19d8daa32a3f970b717bf576db2b43b292839464da4169da5c6758c",
+          "/home/wangshuxun/VLA/data_sim/real2sim-pipeline/runs/case_workflow_validation/runs/build/ec7e4d35ef144d508489fd4cc4eee86a/stage.log": "4eb6e5996039dd8cc07520e927e0209705509970b4e83209f00f37a94ca8c03f"
+        },
+        "status": "passed",
+        "cached": true
+      },
+      "audit": {
+        "fingerprint": "a2531ed49819abf8580231c5898d6ac8fa4c566d7e32a657ec18d0acbdec0c79",
+        "kind": "command",
+        "attempt": "/home/wangshuxun/VLA/data_sim/real2sim-pipeline/runs/case_workflow_validation/runs/audit/1c6acca50d2442919a60f30502f61f6f",
+        "output_hashes": {
+          "/home/wangshuxun/VLA/data_sim/real2sim-pipeline/runs/case_workflow_validation/runs/audit/1c6acca50d2442919a60f30502f61f6f/audit.json": "1dbd8991d5b90cf1c94dd6deee7217f6ba0c7e2b03f870950c4f98624c43f59f",
+          "/home/wangshuxun/VLA/data_sim/real2sim-pipeline/runs/case_workflow_validation/runs/audit/1c6acca50d2442919a60f30502f61f6f/stage.log": "302896665cf2c788881008254fd8b782e81749e7cda8d042a65d783601f66dc6"
+        },
+        "status": "passed",
+        "cached": true
+      },
+      "render": {
+        "fingerprint": "f809c24a82df09cbd50aa844b30750dd43133ea955c46470223570c47a5895dd",
+        "kind": "command",
+        "attempt": "/home/wangshuxun/VLA/data_sim/real2sim-pipeline/runs/case_workflow_validation/runs/render/40b90227180943aebc1f0ebda3afb63c",
+        "output_hashes": {
+          "/home/wangshuxun/VLA/data_sim/real2sim-pipeline/runs/case_workflow_validation/runs/render/40b90227180943aebc1f0ebda3afb63c/images": {
+            "camera_B/000000.png": "4f98dd69e9cad11b118ee62e90575ae541ca8822faabddc307512578262ad819",
+            "camera_B/000000_valid.png": "1f1bb47d9ca0264de5394d9a3ff5c8df33db5454d27bf6bb5aafa3378cb19cef",
+            "render_manifest.json": "c6fe3443b8afc5309e2e5d9e7f453be6baad8425f246dbc6cf45aa6aecc75d4e"
+          },
+          "/home/wangshuxun/VLA/data_sim/real2sim-pipeline/runs/case_workflow_validation/runs/render/40b90227180943aebc1f0ebda3afb63c/stage.log": "ac018a9b98806c515ca368002f910f2ec05576a88e566e4f8169ce19b45d5ed1"
+        },
+        "status": "passed",
+        "cached": true
+      },
+      "review": {
+        "fingerprint": "ba7b393c264f2216f207bbdcf60b0b09a79ed246d92baf920a920e711578a349",
+        "kind": "review",
+        "approval": {
+          "token": "ba7b393c264f2216f207bbdcf60b0b09a79ed246d92baf920a920e711578a349",
+          "decision": "approve",
+          "reviewer": "integration_test",
+          "note": "Synthetic CPU fixture only; no human scene approval",
+          "created_utc": "2026-09-12T11:57:47.675552+00:00"
+        },
+        "status": "passed"
+      },
+      "freeze": {
+        "fingerprint": "06a7394be09bdb8ef61b1c9607212863ac12a89ebcb172e1af3f67e5caace114",
+        "kind": "command",
+        "attempt": "/home/wangshuxun/VLA/data_sim/real2sim-pipeline/runs/case_workflow_validation/runs/freeze/52497f949085462ca43500ece0bbdb66",
+        "output_hashes": {
+          "/home/wangshuxun/VLA/data_sim/real2sim-pipeline/runs/case_workflow_validation/runs/freeze/52497f949085462ca43500ece0bbdb66/baseline": {
+            "manifest.json": "8282e4c82df0d699182669c643b334e520efd56aed35ba56086c7167779f85c5",
+            "scene.blend": "21a9c3f5e19d8daa32a3f970b717bf576db2b43b292839464da4169da5c6758c",
+            "scene.json": "f3bf5f35e29e0201816770930f71a239a4ca1e11f49fdfdb06ad9a900d357487"
+          },
+          "/home/wangshuxun/VLA/data_sim/real2sim-pipeline/runs/case_workflow_validation/runs/freeze/52497f949085462ca43500ece0bbdb66/stage.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "status": "passed",
+        "cached": true
+      }
+    }
+  }
+}

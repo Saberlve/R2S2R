@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0",
+  "source_obj_sha256": "c74a345eb86a89c9edfc975febe4901d7db6959f1f5eada7b06918adf9d1226e",
+  "source_texture_sha256": "2f69c487a02fd0e428527bea5b89eb35e98c07069c774ca681727bcd24ce0dde",
+  "config_sha256": "c1b1e8c6f8c669327d9a3cc05c8832d349d57d7b0aed2dd0c185faa475bf771b",
+  "selected_triangles": 17288,
+  "observed_fraction": 0.9843934377034506,
+  "filled_fraction": 0.015606562296549479,
+  "unknown_fraction": 0.0,
+  "max_grid_nearest_distance_m": 0.0,
+  "mode": "panel",
+  "relief_range_m": [
+    0.0,
+    0.0
+  ],
+  "target_size_m": [
+    0.89,
+    2.08
+  ],
+  "output_front_triangles": 2,
+  "texture_is_true_albedo": false,
+  "photographed_lighting_remains": true,
+  "physics_role": "visual_only_static; supply independent simple collision proxy",
+  "regularization": "relief removes low frequency scan bow, clips local depth; panel uses a clean plane",
+  "erase_mask_sha256": "a5030816b3dcf5ffee37097507833de50436724d4d6fbc68be312af4f14f9e6f"
+}

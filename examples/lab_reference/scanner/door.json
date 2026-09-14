@@ -1,0 +1,109 @@
+{
+  "schema_version": "1.0",
+  "id": "ScanDoor",
+  "source_obj": "../../../data/lab_scanner/desk_and_door/textured_output.obj",
+  "source_texture": "../../../data/lab_scanner/desk_and_door/textured_output.jpg",
+  "units_to_m": 1,
+  "T_scan_m_plane": [
+    [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      1.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0,
+      -1.21
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "T_world_asset": [
+    [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      1.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "crop": {
+    "u_range_m": [
+      -0.325,
+      0.455
+    ],
+    "v_range_m": [
+      -1.26,
+      0.765
+    ],
+    "depth_range_m": [
+      -0.06,
+      0.06
+    ],
+    "normal_abs_depth_min": 0.4,
+    "green_gate": null
+  },
+  "texture_wh": [
+    768,
+    2048
+  ],
+  "max_fill_distance_m": 0.06,
+  "max_unknown_fraction": 0.02,
+  "surface": {
+    "mode": "panel",
+    "grid_wh": [
+      151,
+      181
+    ],
+    "smooth_sigma_cells": 1,
+    "trend_sigma_cells": 9,
+    "relief_limit_m": 0.025,
+    "depth_sign": 1,
+    "thickness_m": 0.035,
+    "target_size_m": [
+      0.89,
+      2.08
+    ],
+    "max_grid_fill_distance_m": 0.05
+  },
+  "appearance": {
+    "erase_mask": "door_erase_mask.png",
+    "exposure_normalization": {
+      "sigma_px": 60,
+      "target_mean": 0.68,
+      "gain_bounds": [
+        0.7555555555555555,
+        2.266666666666667
+      ]
+    }
+  }
+}

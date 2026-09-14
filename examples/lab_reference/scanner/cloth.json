@@ -1,0 +1,103 @@
+{
+  "schema_version": "1.0",
+  "id": "ScanCloth",
+  "source_obj": "../../../data/lab_scanner/green_background/textured_output.obj",
+  "source_texture": "../../../data/lab_scanner/green_background/textured_output.jpg",
+  "units_to_m": 1,
+  "T_scan_m_plane": [
+    [
+      0.2815531108750758,
+      0.0,
+      0.9595456454784042,
+      0.09552291221202079
+    ],
+    [
+      0.0,
+      1.0,
+      -0.0,
+      0.0
+    ],
+    [
+      -0.9595456454784042,
+      0.0,
+      0.2815531108750758,
+      -0.15029413018942694
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "T_world_asset": [
+    [
+      1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      1.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "crop": {
+    "u_range_m": [
+      -1.2921609046069376,
+      0.8553554449931537
+    ],
+    "v_range_m": [
+      -1.235,
+      1.1
+    ],
+    "depth_range_m": [
+      -0.3,
+      0.3
+    ],
+    "normal_abs_depth_min": 0.2,
+    "green_gate": {
+      "min_g": 0.14,
+      "g_over_r": 1.2,
+      "g_over_b": 1.1
+    }
+  },
+  "texture_wh": [
+    768,
+    896
+  ],
+  "max_fill_distance_m": 0.12,
+  "max_unknown_fraction": 0.05,
+  "surface": {
+    "mode": "relief",
+    "grid_wh": [
+      151,
+      181
+    ],
+    "smooth_sigma_cells": 1,
+    "trend_sigma_cells": 9,
+    "relief_limit_m": 0.025,
+    "depth_sign": 1,
+    "thickness_m": 0.0015,
+    "target_size_m": null,
+    "max_grid_fill_distance_m": 0.25
+  },
+  "appearance": {
+    "erase_mask": null,
+    "exposure_normalization": null
+  }
+}

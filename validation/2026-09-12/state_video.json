@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "source_manifest_sha256": "4303da5a9c0004819be7b806795a63c28418e6661db13f03d46373110cefcf29",
+  "camera_order": [
+    "camera_B",
+    "CheckCamera",
+    "WristCamera"
+  ],
+  "frames": 3,
+  "fps": 7.5,
+  "width_height": [
+    480,
+    120
+  ],
+  "resampling": "none",
+  "codec": "h264 yuv420p",
+  "note": "Mosaic pixels are concatenated; compression is lossy."
+}

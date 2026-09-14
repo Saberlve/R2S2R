@@ -1,0 +1,77 @@
+{
+  "source": "frozen baseline/camera_config.json; not fit.json candidate",
+  "source_sha256": "049abfcb4c9c86fcabaebf70f355d32a8c65314b2e63bdcf67c8da1dc28aec44",
+  "legacy_camera": {
+    "object": "Camera_Azure_Kinect.001",
+    "width": 1280,
+    "height": 720,
+    "K": [
+      [
+        734.3046547428728,
+        0,
+        640
+      ],
+      [
+        0,
+        734.3046547428728,
+        360
+      ],
+      [
+        0,
+        0,
+        1
+      ]
+    ],
+    "projection_K_verified": [
+      [
+        364.52484130859375,
+        0,
+        640.0
+      ],
+      [
+        0,
+        364.52486515045166,
+        360.0
+      ],
+      [
+        0,
+        0,
+        1
+      ]
+    ],
+    "max_K_error_px": 2.384185791015625e-05,
+    "pixel_aspect_y": 1.0,
+    "post_rotation_degrees": 0,
+    "T_world_camera_blender": [
+      [
+        0.9962728023529053,
+        0.007868989370763302,
+        -0.08589828014373779,
+        -0.18527987599372864
+      ],
+      [
+        -0.08563718944787979,
+        0.20948801934719086,
+        -0.9740539193153381,
+        -0.9757696986198425
+      ],
+      [
+        0.010329839773476124,
+        0.9777795076370239,
+        0.2093811184167862,
+        1.330430507659912
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "intrinsics_status": "Image-fitted focal; fixed center and zero distortion. Not factory calibration",
+    "extrinsics_status": "Image-fitted jointly with focal; not physical calibration"
+  },
+  "legacy_projection_verification_stale": true,
+  "used_by_runtime_field": "K",
+  "do_not_overwrite_baseline": true
+}

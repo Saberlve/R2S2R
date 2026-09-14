@@ -1,0 +1,8 @@
+# Constraints for core/calibration/metrics/tests; excludes the external Newton fork.
+numpy==1.26.4
+scipy==1.15.3
+pillow==12.3.0
+jsonschema==4.26.0
+scikit-image==0.25.2
+pytest==9.1.1
+opencv-python-headless==4.11.0.86

@@ -1,0 +1,359 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "scene_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "world": {
+      "type": "object",
+      "properties": {
+        "length_unit": {
+          "const": "m"
+        },
+        "up_axis": {
+          "const": "Z"
+        },
+        "handedness": {
+          "const": "right"
+        }
+      },
+      "required": [
+        "length_unit",
+        "up_axis",
+        "handedness"
+      ],
+      "additionalProperties": false
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+          },
+          "role": {
+            "enum": [
+              "table",
+              "robot",
+              "task",
+              "misc",
+              "background"
+            ]
+          },
+          "kind": {
+            "enum": [
+              "box",
+              "mesh",
+              "in_template"
+            ]
+          },
+          "size_m": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "path": {
+            "type": "string"
+          },
+          "T_world_object": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            "minItems": 4,
+            "maxItems": 4
+          },
+          "closed_required": {
+            "type": "boolean"
+          },
+          "confidence": {
+            "enum": [
+              "measured",
+              "estimated",
+              "model"
+            ]
+          },
+          "color_linear": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "roughness": {
+            "type": "number"
+          },
+          "weld_distance_m": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 0.001
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "kind",
+          "T_world_object",
+          "closed_required",
+          "confidence"
+        ],
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "box"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "size_m"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "mesh"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "path"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "cameras": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+          },
+          "blender_object": {
+            "type": "string"
+          },
+          "serial": {
+            "type": "string"
+          },
+          "native_wh": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "K_native": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "distortion": {
+            "type": "object",
+            "properties": {
+              "model": {
+                "enum": [
+                  "none",
+                  "opencv_brown"
+                ]
+              },
+              "coefficients": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 0,
+                "maxItems": 8
+              }
+            },
+            "required": [
+              "model",
+              "coefficients"
+            ],
+            "additionalProperties": false
+          },
+          "T_world_optical": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 4,
+              "maxItems": 4
+            },
+            "minItems": 4,
+            "maxItems": 4
+          },
+          "quality": {
+            "enum": [
+              "estimated",
+              "image_fitted",
+              "calibrated"
+            ]
+          },
+          "evidence": {
+            "type": "string"
+          },
+          "pixel_ops": {
+            "type": "object",
+            "properties": {
+              "crop_xywh": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 4,
+                "maxItems": 4
+              },
+              "resize_wh": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "rotate_180": {
+                "type": "boolean"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          },
+          "mount": {
+            "enum": [
+              "fixed",
+              "body"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "blender_object",
+          "serial",
+          "native_wh",
+          "K_native",
+          "distortion",
+          "T_world_optical",
+          "quality",
+          "evidence",
+          "pixel_ops"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "lights": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+          },
+          "position_m": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "power_W": {
+            "type": "number",
+            "minimum": 0
+          },
+          "size_m": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "color_linear": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "target_m": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "minItems": 3,
+            "maxItems": 3
+          }
+        },
+        "required": [
+          "id",
+          "position_m",
+          "power_W",
+          "size_m",
+          "color_linear"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "world_strength": {
+      "type": "number"
+    },
+    "excluded_entities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "scene_id",
+    "world",
+    "assets",
+    "cameras",
+    "lights",
+    "world_strength",
+    "excluded_entities",
+    "notes"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}
