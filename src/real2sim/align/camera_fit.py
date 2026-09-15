@@ -5,7 +5,7 @@ import copy,hashlib,json,pathlib
 import numpy as np
 from scipy.optimize import least_squares
 from scipy.spatial.transform import Rotation
-from .contracts import load,save,sha,rigid,validate_scene,profile_id
+from ..contracts import load,save,sha,rigid,validate_scene,profile_id
 
 def project(points,T,f,cx,cy):
  q=(np.asarray(points)-T[:3,3])@T[:3,:3]

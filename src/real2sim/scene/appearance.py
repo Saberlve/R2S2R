@@ -2,7 +2,7 @@
 import pathlib,subprocess,sys,json,numpy as np
 from scipy.optimize import minimize
 from PIL import Image
-from .contracts import load,save,profile_id,validate_scene
+from ..contracts import load,save,profile_id,validate_scene
 from .metrics import score
 
 def fit(config_file,output):
@@ -23,7 +23,7 @@ def fit(config_file,output):
  def evaluate(x):
   nonlocal best
   i=len(history);p=out/f'parameters_{i:04d}.json';save(p,dict(zip(keys,map(float,x))));render=out/f'render_{i:04d}'
-  subprocess.run([sys.executable,'-m','real2sim.cli','render','--scene',str(scene),'--blend',str(blend),'--out',str(render),'--parameters',str(p),'--python',cfg['cycles_python'],'--samples',str(cfg.get('samples',16))],check=True,stdout=subprocess.DEVNULL)
+  subprocess.run([sys.executable,'-m','real2sim.cli','scene','render','--scene',str(scene),'--blend',str(blend),'--out',str(render),'--parameters',str(p),'--python',cfg['cycles_python'],'--samples',str(cfg.get('samples',16))],check=True,stdout=subprocess.DEVNULL)
   scores=[]
   for v in views:
    mask=np.asarray(Image.open(root/v['mask']).convert('L'))>127;valid=np.asarray(Image.open(render/v['camera_id']/'000000_valid.png').convert('L'))>127

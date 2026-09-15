@@ -31,9 +31,9 @@ URDF必须是该7轴+G2链，使用控制器标定joint origins；所有mesh路�
 ```bash
 export PYTHONPATH=/path/to/real2sim-pipeline/src
 PY=/path/to/Data-MechanicSim/.venv/bin/python
-$PY -m real2sim.cli xarm7 --case /path/to/case --newton-project /path/to/Data-MechanicSim validate_kinematics -- --episode 0
-$PY -m real2sim.cli xarm7 --case /path/to/case --newton-project /path/to/Data-MechanicSim simulate_replay -- --mode joint --episode 0 --tag joint_check
-$PY -m real2sim.cli xarm7 --case /path/to/case --newton-project /path/to/Data-MechanicSim simulate_replay -- --mode eef --episode 0 --bar --tag eef_contact
+$PY -m real2sim.cli traj xarm7 --case /path/to/case --newton-project /path/to/Data-MechanicSim validate_kinematics -- --episode 0
+$PY -m real2sim.cli traj xarm7 --case /path/to/case --newton-project /path/to/Data-MechanicSim simulate_replay -- --mode joint --episode 0 --tag joint_check
+$PY -m real2sim.cli traj xarm7 --case /path/to/case --newton-project /path/to/Data-MechanicSim simulate_replay -- --mode eef --episode 0 --bar --tag eef_contact
 ```
 
 先跑所有episode运动学，再做无接触跟踪，再做接触。标定/关节范围必须覆盖本次轨迹。生成示例`generate_grasp`使用episode000的初始姿态和配置中的单个box，不是通用任务规划器；`import_eef`接收自主TCP轨迹。当前simulate_replay支持单桌+单box物理任务；多物体、其他碰撞几何需要扩展SceneSpec adapter后测试。

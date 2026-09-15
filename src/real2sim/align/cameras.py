@@ -1,5 +1,5 @@
 import numpy as np
-from .contracts import rigid,profile_id,pixel_transform
+from ..contracts import rigid,profile_id,pixel_transform
 
 def fit_extrinsics(camera,correspondences):
  import cv2

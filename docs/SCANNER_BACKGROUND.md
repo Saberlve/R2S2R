@@ -17,8 +17,8 @@
 
 |阶段|输入|输出|检查|
 |---|---|---|---|
-|S0 留档/检查|原ZIP、OBJ/MTL、原始纹理、手机元数据；明确资料版本|原始文件hash、`scan-inspect`报告|不执行包内脚本；不把手机K当Azure K；OBJ单位未知时明确标注|
-|S1 尺度与配准|至少3个非共线scan/world配对点及1个留出点、明确units_to_m|`scan-register`输出固定尺度的刚体T与fit/holdout残差|不允许通过非均匀缩放或移动主桌/机器人/B相机掩盖错误|
+|S0 留档/检查|原ZIP、OBJ/MTL、原始纹理、手机元数据；明确资料版本|原始文件hash、`scene scan-inspect`报告|不执行包内脚本；不把手机K当Azure K；OBJ单位未知时明确标注|
+|S1 尺度与配准|至少3个非共线scan/world配对点及1个留出点、明确units_to_m|`scene scan-register`输出固定尺度的刚体T与fit/holdout残差|不允许通过非均匀缩放或移动主桌/机器人/B相机掩盖错误|
 |S2 语义裁剪|扫描平面坐标、u/v/depth范围、法向阈值、可选颜色门限|选中的表面三角面、裁剪配置|颜色仅辅助，不能自动证明语义正确；独立排除线缆、主桌、装置残留|
 |S3 纹理转移|原OBJ的独立vertex/UV索引、原图集、明确区域|basecolor.png、observed/filled mask、fill_distance_m.npy|用三角形重心插值读取原UV；不把断裂的UV岛自动当漂浮噪声；限制填补距离|
 |S4 规则几何|panel实测宽高/厚度，或relief网格/平滑尺度/深度上限|独立surface.obj、闭合asset.glb、asset.json|规则门板不能沿用扫描裁剪宽度代替实测门宽；绿布不随意整体拉伸|
@@ -34,7 +34,7 @@ $PY -m real2sim.cli scan-register /data/registration_points.json --out runs/regi
 $PY -m real2sim.cli scan-bake /data/door_bake.json --out runs/door_asset --python "$CYCLES"
 ```
 
-`scan-bake`在主Python中做UV转移/规则化，使用独立bpy进程打包GLB；没有安装或替换Newton。每次使用新目录。将产物asset.json条目合入scene.assets，按scene文件位置重设其相对GLB路径，再运行已有build/render。
+`scene scan-bake`在主Python中做UV转移/规则化，使用独立bpy进程打包GLB；没有安装或替换Newton。每次使用新目录。将产物asset.json条目合入scene.assets，按scene文件位置重设其相对GLB路径，再运行已有build/render。
 
 配准输入：`schema_version=1.0, scan_points[N,3], world_points_m[N,3], split[N], units_to_m>0`。变换严格为：
 

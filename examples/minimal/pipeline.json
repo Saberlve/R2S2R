@@ -8,6 +8,7 @@
       "id": "validate",
       "requires": [],
       "argv": [
+        "scene",
         "validate",
         "{plan_dir}/scene.json"
       ],
@@ -19,6 +20,7 @@
         "validate"
       ],
       "argv": [
+        "scene",
         "build",
         "--scene",
         "{plan_dir}/scene.json",
@@ -38,6 +40,7 @@
         "build"
       ],
       "argv": [
+        "scene",
         "render",
         "--scene",
         "{plan_dir}/scene.json",

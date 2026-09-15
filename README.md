@@ -129,9 +129,9 @@ export PYTHONPATH="$PWD/src"
 PY=/path/to/main/python
 CYCLES=/path/to/python-with-bpy
 $PY -m pytest -q
-$PY -m real2sim.cli validate examples/minimal/scene.json
-$PY -m real2sim.cli build --scene examples/minimal/scene.json --out runs/example/scene.blend --python "$CYCLES"
-$PY -m real2sim.cli render --scene examples/minimal/scene.json --blend runs/example/scene.blend --out runs/example/render --python "$CYCLES" --samples 32
+$PY -m real2sim.cli scene validate examples/minimal/scene.json
+$PY -m real2sim.cli scene build --scene examples/minimal/scene.json --out runs/example/scene.blend --python "$CYCLES"
+$PY -m real2sim.cli scene render --scene examples/minimal/scene.json --blend runs/example/scene.blend --out runs/example/render --python "$CYCLES" --samples 32
 ```
 
 也可以把 `examples/minimal/pipeline.json` 中的 `cycles_python` 改成自己的环境路径，然后：
@@ -146,10 +146,10 @@ $PY -m real2sim.cli run examples/minimal/pipeline.json --out runs/example_pipeli
 
 ## 目录
 
-- `src/real2sim/`：场景、相机、轨迹、指标与 CLI
+- `src/real2sim/`：四域结构 `scene/`（场景视觉重建）、`align/`（真实-仿真对齐）、`traj/`（轨迹产生）、`tactile/`（触觉接入，预留），外加共享 `contracts.py`、CLI 与工作流引擎；详见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - `src/real2sim/schemas/`：机器可读输入约束
 - `src/real2sim/workers/`：独立 bpy worker
-- `src/real2sim/adapters/xarm7/`：来自已运行项目的物理适配器；通过环境注入案例/工程路径
+- `src/real2sim/traj/adapters/xarm7/`：来自已运行项目的物理适配器；通过环境注入案例/工程路径
 - `tools/`：只读数据导入、控制器快照转换、需明确启用才拍摄的相机采集工具
 - `examples/`：最小场景及任务计划，不包含真实图像或大模型
 - `tests/`：坐标、相机 profile、数据语义、防覆盖与桥接检查
@@ -169,8 +169,8 @@ $PY -m real2sim.cli run examples/minimal/pipeline.json --out runs/example_pipeli
 
 ```bash
 $PY tools/export_saved_states.py --states /path/to/states.npz --bindings /path/to/bindings.json --out runs/motion/states.jsonl
-$PY -m real2sim.cli render --scene /path/to/scene.json --blend /path/to/scene.blend --states runs/motion/states.jsonl --out runs/motion/render --python "$CYCLES"
-$PY -m real2sim.cli video --manifest runs/motion/render/render_manifest.json --cameras CameraB Azure Wrist --out runs/motion/three_views.mp4
+$PY -m real2sim.cli scene render --scene /path/to/scene.json --blend /path/to/scene.blend --states runs/motion/states.jsonl --out runs/motion/render --python "$CYCLES"
+$PY -m real2sim.cli scene video --manifest runs/motion/render/render_manifest.json --cameras CameraB Azure Wrist --out runs/motion/three_views.mp4
 ```
 
 必须先按实际 link-to-mesh 关系准备 binding。用 `--stride` 抽取状态会改变渲染 FPS，不改变物理时间；encoder 依据时间戳编码。视频工具需要环境中现有 ffmpeg。

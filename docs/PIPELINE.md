@@ -5,14 +5,14 @@
 |阶段|严格输入|输出|执行方式|进入下一阶段的门槛|
 |---|---|---|---|---|
 |00 资料留档|原始照片/视频/扫描；采集时间、设备序列号、原生分辨率、曝光、白平衡；测量端点说明|原始资料目录、SHA256 inventory、capture metadata、测量表|人工采集；`inventory`；可选 `tools/capture_realsense.py`|无未知裁剪/缩放；原始资料只读；光照与参考拍摄时刻明确|
-|01 空间与资产|米制测量、原始多视角图、每个语义实体的资产|独立资产文件 + `scene.json` + scene.blend|人工/Agent 分割补全，`build`/MCP 或导入模板|桌面、机器人、夹爪、任务物体分开；规则几何优先；Apply Scale；非闭合处有明确豁免|
-|01S 扫描背景|3D Scanner ZIP/OBJ/MTL/图集、尺度锚点、裁剪与补全配置|独立闭合GLB、观测/补洞mask、纹理、配准与网格报告|`scan-inspect` → `scan-register` → `scan-bake`；详见SCANNER_BACKGROUND.md|保留真实局部轮廓与UV；规则门墙独立；反光/缺失扫描不盲用；冻结主桌/机器人/B|
-|02 相机|实际 RGB 流 K/D/native_wh；标定板或独立实测3D点；原生像素2D对应|相机 profile、T_world_optical、重投影报告与独立检查点结果|固定内参后 `calibrate`；其他标定工具按同一契约导入|检查正深度、点覆盖、尺度、平面歧义；不同分辨率不能共用未换算的标注；未知内参不得伪称外参标定完成|
-|02U 内参未知的视角拟合|冻结几何与可信相机、原生点/线标注、焦距/位姿边界|仅目标相机K/T候选、fit/holdout误差、多起点报告|`fit-camera`；Azure实际路径见AZURE_CAMERA_ALIGNMENT.md|桌子与机器人同时匹配；正深度；留出检查；不冒充厂家/物理标定|
+|01 空间与资产|米制测量、原始多视角图、每个语义实体的资产|独立资产文件 + `scene.json` + scene.blend|人工/Agent 分割补全，`scene build`/MCP 或导入模板|桌面、机器人、夹爪、任务物体分开；规则几何优先；Apply Scale；非闭合处有明确豁免|
+|01S 扫描背景|3D Scanner ZIP/OBJ/MTL/图集、尺度锚点、裁剪与补全配置|独立闭合GLB、观测/补洞mask、纹理、配准与网格报告|`scene scan-inspect` → `scene scan-register` → `scene scan-bake`；详见SCANNER_BACKGROUND.md|保留真实局部轮廓与UV；规则门墙独立；反光/缺失扫描不盲用；冻结主桌/机器人/B|
+|02 相机|实际 RGB 流 K/D/native_wh；标定板或独立实测3D点；原生像素2D对应|相机 profile、T_world_optical、重投影报告与独立检查点结果|固定内参后 `align calibrate`；其他标定工具按同一契约导入|检查正深度、点覆盖、尺度、平面歧义；不同分辨率不能共用未换算的标注；未知内参不得伪称外参标定完成|
+|02U 内参未知的视角拟合|冻结几何与可信相机、原生点/线标注、焦距/位姿边界|仅目标相机K/T候选、fit/holdout误差、多起点报告|`align fit-camera`；Azure实际路径见AZURE_CAMERA_ALIGNMENT.md|桌子与机器人同时匹配；正深度；留出检查；不冒充厂家/物理标定|
 |03 几何注册|相机已固定、米制资产、距离约束、同步机器人关节|通过多视角检查的几何和 link-to-mesh 绑定|人工/有约束搜索；一次只改变一类变量|距离闭合；不放松实测尺寸去迁就图像；机器人先在可信视角核对，次要相机不能补偿机器人姿态错误|
-|04 外观|固定几何/相机；同一光照时段参考；固定排除mask；fit/holdout 分组|参数、完整候选渲染、loss历史、未参与选择的检查结果|`fit-appearance`；本仓库使用实际 Cycles 渲染，有界 Powell 搜索|fit改善且holdout不明显退化；相同mask、分辨率和指标；不使用同姿态重复帧冒充独立动态验证|
+|04 外观|固定几何/相机；同一光照时段参考；固定排除mask；fit/holdout 分组|参数、完整候选渲染、loss历史、未参与选择的检查结果|`scene fit-appearance`；本仓库使用实际 Cycles 渲染，有界 Powell 搜索|fit改善且holdout不明显退化；相同mask、分辨率和指标；不使用同姿态重复帧冒充独立动态验证|
 |05 冻结|通过审核的 template.blend、scene.json、相机profile、审计/外观报告|新 baseline目录与哈希清单|`freeze` + 人工签署门槛检查|重新渲染和固定相机/腕部绑定验证；标清 estimated/image_fitted/calibrated；视觉冻结不等于物理验证|
-|06 数据与坐标|原始关节 observation/action、时间戳、标定关节原点、TCP、世界偏移快照|规范 NPZ；分别转换的 observation/action TCP；原视频索引|LeRobot importer → `convert`|原始数值/索引不变；弧度/米约定明确；TCP只应用一次；控制器FK与本地FK独立对照|
+|06 数据与坐标|原始关节 observation/action、时间戳、标定关节原点、TCP、世界偏移快照|规范 NPZ；分别转换的 observation/action TCP；原视频索引|LeRobot importer → `traj convert`|原始数值/索引不变；弧度/米约定明确；TCP只应用一次；控制器FK与本地FK独立对照|
 |07 运动学/控制|冻结基座T、真实关节与EEF、机器人模型|关节直接回放、EEF→IK→驱动回放、误差/限位/连续性报告|Newton robot adapter|先同关节FK一致，再测动态跟踪；六维EEF不能唯一确定七轴冗余姿态|
 |08 接触任务|物体尺寸/质量/惯量/初始位姿/摩擦与置信度；夹爪开口映射|接近-闭合-抬升轨迹、真实自由刚体状态、接触力/滑移/穿透、扰动结果|Newton contacts；必要时第二后端交叉验证|抬升/保持、穿透、接触与稳定性分别报告；禁止绑定物体或逐帧修改物体状态伪造抓取|
 |09 导出/回归|已验证的实际状态和目标状态、完整变换链|分视角RGB、视频、sim/base TCP、关节目标、gripper、dry-run检查|snapshot bridge → Cycles；robot adapter export|所有视角读同一状态；固定相机不漂移；物理时间和渲染采样率明确；真实执行必须另行现场验证|

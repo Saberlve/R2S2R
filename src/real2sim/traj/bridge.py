@@ -1,5 +1,5 @@
 import numpy as np
-from .contracts import pose,rigid
+from ..contracts import pose,rigid
 
 def snapshot_from_newton(model,state,bindings,frame_id,time_s,camera_bindings=None):
  if not isinstance(frame_id,(int,np.integer)) or frame_id<0 or not np.isfinite(time_s):raise ValueError("Invalid frame id/time")

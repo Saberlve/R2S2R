@@ -1,7 +1,7 @@
 """Synchronized equal-size camera mosaic, without silently changing time or aspect."""
 import pathlib,subprocess,numpy as np
 from PIL import Image,ImageDraw
-from .contracts import load,save,sha
+from ..contracts import load,save,sha
 
 def frame_groups(manifest,cameras):
  if not cameras or len(set(cameras))!=len(cameras):raise ValueError('Need ordered unique camera ids')

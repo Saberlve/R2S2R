@@ -10,10 +10,7 @@ import subprocess
 import sys
 import uuid
 from .contracts import load, sha
-
-COMMANDS = {'validate', 'build', 'audit', 'render', 'freeze', 'scan-inspect',
-            'scan-register', 'scan-bake', 'calibrate', 'fit-camera',
-            'fit-appearance', 'score', 'convert', 'video'}
+from .cli import normalize_command, allowlisted
 
 
 def atomic(path, value):
@@ -233,14 +230,14 @@ def _run(case, retry_failed):
                     target = attempt / 'configs' / (name + '.json')
                     atomic(target, expand(load(source), local))
                     local['template.' + name] = str(target)
-                args = expand(s['argv'], local)
-                if not args or args[0] not in COMMANDS:
+                args = normalize_command(expand(s['argv'], local))
+                if not allowlisted(args):
                     raise ValueError('Command not allowlisted')
                 if '--out' in args:
                     dest = Path(args[args.index('--out') + 1]).resolve()
                     if not dest.is_relative_to(attempt) or dest == attempt:
                         raise ValueError('--out must be a child of the fresh attempt')
-                elif args[0] != 'validate':
+                elif args[:2] != ['scene', 'validate']:
                     raise ValueError('Command requires --out')
                 outputs = [(attempt / p).resolve() for p in s.get('outputs', [])]
                 if any(not p.is_relative_to(attempt) or p == attempt for p in outputs):

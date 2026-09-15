@@ -1,7 +1,7 @@
 """Hardware-independent FK using captured calibrated joint origins."""
 import numpy as np
 from scipy.spatial.transform import Rotation
-from .contracts import rigid
+from ..contracts import rigid
 
 def forward(q,calibration):
  q=np.asarray(q,float);origins=np.asarray(calibration['joint_origins_xyz_m_rpy_rad'],float)

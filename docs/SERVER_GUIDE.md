@@ -79,7 +79,7 @@ patch 支持：
 
 输出为 `OUTPUT/template/results/still/` 或 `motion/`，含三相机 PNG、拼接图与绑定验证。当前腕部与 B 均为640×480；Azure保留原来标定比例，三视角拼接时等比缩放并补边，不拉伸成新的相机内参。
 
-这里 `--states` 接受实验室 runtime 格式：每行 `objects[ObjectName].matrix_world` 和时间信息，由已验证 link-to-mesh 绑定生成。**不能直接传 NPZ、关节列表或通用 CLI 的 `T_world_objects` 状态。** 通用 `real2sim.cli render` 使用独立 schema，转换方法见 [机器人接口](ROBOT.md)。
+这里 `--states` 接受实验室 runtime 格式：每行 `objects[ObjectName].matrix_world` 和时间信息，由已验证 link-to-mesh 绑定生成。**不能直接传 NPZ、关节列表或通用 CLI 的 `T_world_objects` 状态。** 通用 `real2sim.cli scene render` 使用独立 schema，转换方法见 [机器人接口](ROBOT.md)。
 
 ## Newton 离线仿真与视频
 

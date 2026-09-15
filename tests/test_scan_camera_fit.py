@@ -2,8 +2,8 @@ import copy,json,pathlib,numpy as np,pytest
 from PIL import Image
 from scipy.spatial.transform import Rotation
 from real2sim.contracts import save,sha,profile_id
-from real2sim.scans import register,bake,read_obj
-from real2sim.camera_fit import fit,project
+from real2sim.scene.scans import register,bake,read_obj
+from real2sim.align.camera_fit import fit,project
 
 def test_scan_registration_preserves_scale_and_holdout(tmp_path):
  p=np.array([[0,0,0],[1,0,0],[0,1,0],[0,0,1.]])*1000;R=Rotation.from_euler('z',.3).as_matrix();q=p*.001@R.T+[.2,.3,.4];c={'schema_version':'1.0','scan_points':p.tolist(),'world_points_m':q.tolist(),'split':['fit']*3+['holdout'],'units_to_m':.001};save(tmp_path/'c.json',c);o=register(tmp_path/'c.json',tmp_path/'out.json');assert o['holdout_rmse_m']<1e-10 and not o['scale_optimized'];assert np.isclose(np.linalg.det(np.array(o['T_world_scan_m'])[:3,:3]),1)

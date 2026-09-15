@@ -1,7 +1,7 @@
 """Declarative CLI DAG runner; no shell command strings and no hardware plugins."""
 import pathlib,subprocess,sys,datetime,json,re
 from .contracts import load,save,sha
-ALLOWED={'validate','inventory','check-inventory','build','render','audit','calibrate','score','convert','freeze','video','fit-appearance','scan-inspect','scan-register','scan-bake','fit-camera'}
+from .cli import normalize_command,allowlisted
 def run(plan_path,output):
  plan_path=pathlib.Path(plan_path).resolve();plan=load(plan_path);out=pathlib.Path(output).resolve()
  if out.exists():raise FileExistsError('A run directory must be new')
@@ -10,8 +10,8 @@ def run(plan_path,output):
  for stage in plan['stages']:
   if set(stage)!={'id','requires','argv','outputs'} or not re.fullmatch('[A-Za-z][A-Za-z0-9_-]*',stage['id']) or stage['id'] in done:raise ValueError('Invalid/duplicate stage')
   if not all(done.get(k) for k in stage['requires']):raise ValueError('Dependency missing or failed')
-  args=[str(v).format_map(variables) for v in stage['argv']]
-  if not args or args[0] not in ALLOWED:raise ValueError('Unapproved pipeline command')
+  args=normalize_command([str(v).format_map(variables) for v in stage['argv']])
+  if not allowlisted(args):raise ValueError('Unapproved pipeline command')
   if '--out' in args and not pathlib.Path(args[args.index('--out')+1]).resolve().is_relative_to(out):raise ValueError('Command output escapes run directory')
   outputs=[pathlib.Path(str(v).format_map(variables)).resolve() for v in stage['outputs']]
   if any(not p.is_relative_to(out) for p in outputs):raise ValueError('Declared output escapes run directory')

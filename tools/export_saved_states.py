@@ -1,6 +1,6 @@
 """Saved Newton state arrays -> canonical rendering JSONL; no hardware or stepping."""
 import argparse,pathlib,json,numpy as np
-from real2sim.bridge import snapshot_from_newton
+from real2sim.traj.bridge import snapshot_from_newton
 from real2sim.contracts import load
 p=argparse.ArgumentParser();p.add_argument('--states',required=True);p.add_argument('--bindings',required=True);p.add_argument('--out',required=True);p.add_argument('--stride',type=int,default=1);a=p.parse_args()
 d=np.load(a.states,allow_pickle=False);b=load(a.bindings);out=pathlib.Path(a.out)

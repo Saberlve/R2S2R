@@ -1,9 +1,9 @@
 import copy,json,pathlib,numpy as np,pytest
 from real2sim.contracts import validate_scene,rigid,profile_id,pixel_transform,pose
-from real2sim.cameras import fit_extrinsics
-from real2sim.trajectory import convert_episode
+from real2sim.align.cameras import fit_extrinsics
+from real2sim.traj.trajectory import convert_episode
 from real2sim.artifacts import freeze,inventory,check_inventory
-from real2sim.bridge import snapshot_from_newton
+from real2sim.traj.bridge import snapshot_from_newton
 P=pathlib.Path(__file__).parents[1]
 def scene():return json.loads((P/'examples/minimal/scene.json').read_text())
 def test_scene_and_extra_fields():
@@ -47,7 +47,7 @@ def test_newton_binding_missing_duplicate_and_units():
 
 def test_masked_metrics_excludes_unmodelled_objects(tmp_path):
  from PIL import Image
- from real2sim.metrics import score
+ from real2sim.scene.metrics import score
  a=np.zeros((32,32,3),np.uint8);b=a.copy();b[:8]=255;m=np.zeros((32,32),np.uint8);m[10:30,2:30]=255
  for name,v in [('a',a),('b',b),('mask',m)]:Image.fromarray(v).save(tmp_path/(name+'.png'))
  result=score(tmp_path/'a.png',tmp_path/'b.png',tmp_path/'mask.png');assert result['mae']==0 and abs(result['ssim']-1)<1e-10 and result['lpips'] is None
@@ -75,7 +75,7 @@ def test_ids_are_global():
 
 
 def test_video_requires_synchronized_uniform_frames():
- from real2sim.video import frame_groups
+ from real2sim.scene.video import frame_groups
  rows=[{'camera_id':c,'frame_id':i,'time_s':i/30,'profile_id':c,'width_height':[640,480]} for i in range(3) for c in ['b','wrist']]
  groups,wh,fps=frame_groups({'frames':rows},['b','wrist'])
  assert len(groups)==3 and wh==[640,480] and np.isclose(fps,30)

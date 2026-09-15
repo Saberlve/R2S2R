@@ -25,7 +25,7 @@
 }
 ```
 
-路径相对config。真实输入分辨率须与对应profile输出一致。这里的JSON用于说明，camera/object id须替换为场景实际id，profile哈希必须来自`validate`。
+路径相对config。真实输入分辨率须与对应profile输出一致。这里的JSON用于说明，camera/object id须替换为场景实际id，profile哈希必须来自`scene validate`。
 
 输出：`parameters_NNNN.json`、`render_NNNN/`、`history.json`、`best.json`、`acceptance.json`。best只按fit loss选取；holdout不用于选择。验收还要人工检查光源方向、阴影、高光、颜色及前景曝光，不能只看综合分数。
 

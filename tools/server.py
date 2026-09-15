@@ -48,7 +48,7 @@ def main():
    save(out/'checks.json',checks)
    if not all(x['passed'] for x in checks):raise RuntimeError('Environment check failed; see logs')
   elif a.command=='smoke':
-   scene=ROOT/'examples/minimal/scene.json';base=[py,'-m','real2sim.cli'];run(base+['validate',scene],env,out/'validate.log');run(base+['build','--scene',scene,'--out',out/'scene.blend','--python',bpy],env,out/'build.log');run(base+['render','--scene',scene,'--blend',out/'scene.blend','--out',out/'render','--python',bpy,'--samples',a.samples],env,out/'render.log')
+   scene=ROOT/'examples/minimal/scene.json';base=[py,'-m','real2sim.cli'];run(base+['scene','validate',scene],env,out/'validate.log');run(base+['scene','build','--scene',scene,'--out',out/'scene.blend','--python',bpy],env,out/'build.log');run(base+['scene','render','--scene',scene,'--blend',out/'scene.blend','--out',out/'render','--python',bpy,'--samples',a.samples],env,out/'render.log')
   elif a.command in ['inspect','edit']:
    args=[bpy,ROOT/'tools/server_scene.py',a.command,'--template',template,'--out',out]
    if a.command=='edit':args+=['--patch',pathlib.Path(a.patch).resolve()]

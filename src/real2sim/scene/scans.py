@@ -5,7 +5,7 @@ import pathlib,numpy as np
 from PIL import Image
 from scipy.ndimage import distance_transform_edt,gaussian_filter
 from scipy.spatial import cKDTree
-from .contracts import load,save,sha,rigid
+from ..contracts import load,save,sha,rigid
 
 def read_obj(path):
  v=[];uv=[];faces=[];ft=[];materials=set()
