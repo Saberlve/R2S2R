@@ -12,5 +12,5 @@ Use plain language over jargon, and reference technical details only to the degr
 - Test changed contracts, the minimal render fixture, and affected adapters. Do not change unrelated user projects.
 
 - The authoritative working copy is on zju. Edit scene JSON/Python and use `./r2s-server`; do not require desktop Blender or MCP. Server bpy/Cycles remains the tested rendering backend.
-- Read `site.local.json` and case `current_scene.json` before reference-scene changes. Keep camera/robot frame contracts and uncertainty explicit.
+- Read the `R2S_*` runtime paths (`./r2s-server site`) and case `current_scene.json` before reference-scene changes. Keep camera/robot frame contracts and uncertainty explicit.
 - Server launcher runs must write fresh output directories; visual patches do not update physics automatically.
