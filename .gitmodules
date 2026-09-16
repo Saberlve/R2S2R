@@ -1,0 +1,3 @@
+[submodule "external/Data-MechanicSim"]
+	path = external/Data-MechanicSim
+	url = https://git.weiyantech.cn/Worlddynamics/Data-MechanicSim.git
