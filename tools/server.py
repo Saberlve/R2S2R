@@ -6,6 +6,11 @@ This tool never contacts hardware.
 import argparse,datetime,json,os,pathlib,shutil,subprocess,sys
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 SITE_ENV={'main_python':'R2S_MAIN_PYTHON','cycles_python':'R2S_CYCLES_PYTHON','ffmpeg':'R2S_FFMPEG','newton_project':'R2S_NEWTON_PROJECT','measured_case':'R2S_MEASURED_CASE','reference_template':'R2S_REFERENCE_TEMPLATE','runs_root':'R2S_RUNS_ROOT'}
+# Printed when a path check fails, so `doctor` says where to get the thing rather than just
+# reporting that it is absent.
+PATH_HINTS={'reference_template':'R2S_REFERENCE_TEMPLATE: the accepted scene runtime directory; see docs/SERVER_GUIDE.md',
+ 'measured_case':'R2S_MEASURED_CASE: the measured bar-grasp case; see docs/RESOURCES.md',
+ 'newton_project':'R2S_NEWTON_PROJECT: a Data-MechanicSim checkout (this also provides tacsim); see docs/DEPENDENCIES.md'}
 def load(path):return json.loads(pathlib.Path(path).read_text())
 def save(path,value):pathlib.Path(path).write_text(json.dumps(value,indent=2,ensure_ascii=False)+"\n")
 def site_from_env(environ):
@@ -55,9 +60,17 @@ def main():
                 code="import importlib,json,sys; names="+repr(mods)+"; print(json.dumps({'python':sys.version,'modules':{n:{'version':str(getattr(importlib.import_module(n),'__version__',getattr(getattr(importlib.import_module(n),'app',None),'version_string','unknown'))),'path':str(getattr(importlib.import_module(n),'__file__',''))} for n in names}}))"
                 r=subprocess.run([exe,'-c',code],env=env,text=True,capture_output=True);(out/(label+'.log')).write_text(r.stdout+r.stderr);checks.append({'runtime':label,'passed':r.returncode==0})
             ff=subprocess.run([site['ffmpeg'],'-version'],capture_output=True,text=True);(out/'ffmpeg.log').write_text(ff.stdout+ff.stderr);checks.append({'runtime':'ffmpeg','passed':ff.returncode==0})
-            for key in ['reference_template','measured_case','newton_project']:checks.append({'path':key,'passed':pathlib.Path(site[key]).exists()})
+            for key in ['reference_template','measured_case','newton_project']:
+                ok=pathlib.Path(site[key]).exists();check={'path':key,'passed':ok}
+                if not ok:check['hint']=PATH_HINTS[key]
+                checks.append(check)
+            # tacsim is reported but never critical: the tactile backend has its own entry point
+            # (`r2s tactile doctor`) and no scene/Cycles command depends on it.
+            code="import importlib.util,json;s=importlib.util.find_spec('tacsim');print(json.dumps({'tacsim':getattr(s,'origin',None)}))"
+            r=subprocess.run([py,'-c',code],env=env,text=True,capture_output=True);(out/'tacsim.log').write_text(r.stdout+r.stderr)
+            checks.append({'runtime':'tacsim','passed':r.returncode==0 and 'null' not in r.stdout,'critical':False})
             save(out/'checks.json',checks)
-            if not all(x['passed'] for x in checks):raise RuntimeError('Environment check failed; see logs')
+            if not all(x['passed'] for x in checks if x.get('critical',True)):raise RuntimeError('Environment check failed; see logs')
         elif a.command=='smoke':
             scene=ROOT/'examples/minimal/scene.json';base=[py,'-m','real2sim.cli'];run(base+['scene','validate',scene],env,out/'validate.log');run(base+['scene','build','--scene',scene,'--out',out/'scene.blend','--python',bpy],env,out/'build.log');run(base+['scene','render','--scene',scene,'--blend',out/'scene.blend','--out',out/'render','--python',bpy,'--samples',a.samples],env,out/'render.log')
         elif a.command in ['inspect','edit']:

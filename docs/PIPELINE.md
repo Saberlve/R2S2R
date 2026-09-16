@@ -8,7 +8,7 @@
 |01 空间与资产|米制测量、原始多视角图、每个语义实体的资产|独立资产文件 + `scene.json` + scene.blend|人工/Agent 分割补全，`scene build`/MCP 或导入模板|桌面、机器人、夹爪、任务物体分开；规则几何优先；Apply Scale；非闭合处有明确豁免|
 |01S 扫描背景|3D Scanner ZIP/OBJ/MTL/图集、尺度锚点、裁剪与补全配置|独立闭合GLB、观测/补洞mask、纹理、配准与网格报告|`scene scan-inspect` → `scene scan-register` → `scene scan-bake`；详见SCANNER_BACKGROUND.md|保留真实局部轮廓与UV；规则门墙独立；反光/缺失扫描不盲用；冻结主桌/机器人/B|
 |02 相机|实际 RGB 流 K/D/native_wh；标定板或独立实测3D点；原生像素2D对应|相机 profile、T_world_optical、重投影报告与独立检查点结果|固定内参后 `align calibrate`；其他标定工具按同一契约导入|检查正深度、点覆盖、尺度、平面歧义；不同分辨率不能共用未换算的标注；未知内参不得伪称外参标定完成|
-|02U 内参未知的视角拟合|冻结几何与可信相机、原生点/线标注、焦距/位姿边界|仅目标相机K/T候选、fit/holdout误差、多起点报告|`align fit-camera`；Azure实际路径见AZURE_CAMERA_ALIGNMENT.md|桌子与机器人同时匹配；正深度；留出检查；不冒充厂家/物理标定|
+|02U 内参未知的视角拟合|冻结几何与可信相机、原生点/线标注、焦距/位姿边界|仅目标相机K/T候选、fit/holdout误差、多起点报告|`align fit-camera`；历史Azure案例与配置样例见 `examples/lab_reference/azure/`|桌子与机器人同时匹配；正深度；留出检查；不冒充厂家/物理标定|
 |03 几何注册|相机已固定、米制资产、距离约束、同步机器人关节|通过多视角检查的几何和 link-to-mesh 绑定|人工/有约束搜索；一次只改变一类变量|距离闭合；不放松实测尺寸去迁就图像；机器人先在可信视角核对，次要相机不能补偿机器人姿态错误|
 |04 外观|固定几何/相机；同一光照时段参考；固定排除mask；fit/holdout 分组|参数、完整候选渲染、loss历史、未参与选择的检查结果|`scene fit-appearance`；本仓库使用实际 Cycles 渲染，有界 Powell 搜索|fit改善且holdout不明显退化；相同mask、分辨率和指标；不使用同姿态重复帧冒充独立动态验证|
 |05 冻结|通过审核的 template.blend、scene.json、相机profile、审计/外观报告|新 baseline目录与哈希清单|`freeze` + 人工签署门槛检查|重新渲染和固定相机/腕部绑定验证；标清 estimated/image_fitted/calibrated；视觉冻结不等于物理验证|

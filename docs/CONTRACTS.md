@@ -81,4 +81,4 @@ Light为area光源，默认沿世界-Z照射；可用`target_m`指定照向的�
 
 ## 扫描与未知内参接口
 
-扫描的scan-register/scan-bake配置、坐标链、纹理覆盖mask、asset.glb及碰撞角色见[SCANNER_BACKGROUND.md](SCANNER_BACKGROUND.md)。未知内参的七参数fit-camera输入、点/线/正深度约束和候选输出见[AZURE_CAMERA_ALIGNMENT.md](AZURE_CAMERA_ALIGNMENT.md)。两者与原有固定K的PnP是不同接口，不互相替代。
+扫描的scan-register/scan-bake配置、坐标链、纹理覆盖mask、asset.glb及碰撞角色见[SCANNER_BACKGROUND.md](SCANNER_BACKGROUND.md)。未知内参的七参数fit-camera输入、点/线/正深度约束和候选输出见 `r2s align fit-camera`（配置 schema 与历史 Azure 案例见 `examples/lab_reference/azure/`）。两者与原有固定K的PnP是不同接口，不互相替代。

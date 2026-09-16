@@ -1,17 +1,17 @@
 """Photon offline render worker: runs under a Python that has the tacsim dependencies (3.10 + CUDA + OpenGL).
 
 Usage: python photon_worker.py <config.json> <out_dir>
-Environment: R2S_TACSIM_ROOT points at the Data-TacSim submodule root (defaults to this repo's
-external/Data-TacSim). Headless hosts need xvfb-run -a. The output is a simulated observation
-and must not be read as real-contact validation.
+The interpreter must resolve `tacsim` on its own import path, including the vendor bundle under
+that checkout's third_party/. This worker deliberately adds no tacsim path of its own, so
+whichever checkout the interpreter is pointed at is the one that runs; check it with
+`r2s tactile doctor --python <that python>`. Headless hosts need xvfb-run -a. The output is a
+simulated observation and must not be read as real-contact validation.
 """
-import os
 import pathlib
 import sys
 
 _ROOT = pathlib.Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(_ROOT / "src"))
-sys.path.insert(0, os.environ.get("R2S_TACSIM_ROOT", str(_ROOT / "external" / "Data-TacSim")))
 
 import numpy as np  # noqa: E402
 
@@ -50,8 +50,19 @@ def main():
         raise FileExistsError("A run directory must be new: " + str(out))
     cfg = validate_render_config(__import__("json").loads(config_path.read_text(encoding="utf-8")))
 
-    import torch
-    from tacsim.runtime import NewtonTactileSensor, TactileLatentTensor
+    try:
+        # torch comes first in the tactile environment, so it is what fails on an interpreter
+        # that has none of this; keep both imports under one actionable message rather than
+        # letting the bare ModuleNotFoundError below reach the user.
+        import torch
+        from tacsim.runtime import NewtonTactileSensor, TactileLatentTensor
+    except ImportError as exc:
+        # The caller runs this with check=True, so the message below is what a newcomer sees.
+        raise SystemExit(
+            "photon_worker needs the Photon runtime importable by " + sys.executable + " (got: " + str(exc) + ").\n"
+            "That means Python 3.10 + CUDA + a tacsim checkout whose vendor bundle is present. "
+            "Run `r2s tactile doctor --python " + sys.executable + "` to see which part is missing."
+        ) from exc
 
     tacsim_outputs = tuple({"marker_flow": "marker"}.get(o, o) for o in cfg["outputs"])
     runtime = NewtonTactileSensor("photon", outputs=tacsim_outputs, device=cfg["device"])

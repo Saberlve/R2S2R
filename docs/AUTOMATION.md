@@ -51,7 +51,7 @@
 ## 把两条关键路径接入新场景
 
 1. Scanner：保留原包 → Agent 安全解包、识别语义区域 → `scene scan-inspect` → 准备注册点/尺度约束 → `scene scan-register` → `scene scan-bake` → 独立 GLB/纹理及审计。详细字段与案例见 SCANNER_BACKGROUND.md 和 examples/lab_reference/scanner。最终 GLB 路径及变换写入 scene；注册质量和裁切接缝需要复核。
-2. Azure/未知 K：先固定尺寸、桌子、机器人基座及可信 B 相机 → 准备多处 3D–2D 对应点、线和深度约束 → `align fit-camera` → 独立边缘/另一视角检查 → 接受后下游使用候选 scene。见 AZURE_CAMERA_ALIGNMENT.md 和 examples/lab_reference/azure；不能只用训练重投影误差验收。
+2. Azure/未知 K：先固定尺寸、桌子、机器人基座及可信 B 相机 → 准备多处 3D–2D 对应点、线和深度约束 → `align fit-camera` → 独立边缘/另一视角检查 → 接受后下游使用候选 scene。见 `r2s align fit-camera` 和 examples/lab_reference/azure；不能只用训练重投影误差验收。
 3. 外观：冻结几何与相机 → `scene fit-appearance` 完整 Cycles 候选 → 检查 fit/holdout loss、有效 mask、前景曝光 → review → 采用明确的参数文件，再 render。拟合器不会自动把候选结果写回 baseline。
 4. motion：已有 Newton 状态通过 export_saved_states.py 转标准 JSONL，再配置 render 的 `--states` 与 video 阶段。机器人碰撞、TCP、接触验收仍是独立要求。
 

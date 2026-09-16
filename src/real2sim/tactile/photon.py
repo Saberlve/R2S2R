@@ -1,10 +1,11 @@
 """Photon (Xense G1-WS) tactile sensor integration: runtime checks and render config validation.
 
-The backend comes from the git submodule external/Data-TacSim (the tacsim library) plus the
-vendor-proprietary simulation package xense-sim4.5, deployed under that submodule's
-third_party/ and not tracked by git. This module is pure logic: it does not import tacsim.
-The heavy work lives in photon_worker.py, a separate process that needs CUDA and an OpenGL
-context.
+tacsim (the Data-TacSim library) is consumed from whatever interpreter is passed to --python;
+this repository does not carry a copy and does not inject one into sys.path. The vendor
+runtime package xense-sim4.5 is committed upstream in that checkout's third_party/xense_photon/.
+Everything this module reports is therefore read *from the target interpreter*, never from a
+path relative to this file. The module itself is pure logic: it does not import tacsim. The
+heavy work lives in photon_worker.py, a separate process that needs CUDA and an OpenGL context.
 """
 from __future__ import annotations
 
@@ -13,17 +14,32 @@ import math
 import pathlib
 import subprocess
 
-REPO_ROOT = pathlib.Path(__file__).resolve().parents[3]
-TACSIM_ROOT = REPO_ROOT / "external" / "Data-TacSim"
 BUNDLE_GLOB = "third_party/*/**/pip_prebundle/xensim"
 VALID_OUTPUTS = ("depth", "rgb", "marker_flow")
 
 
-def find_bundle(tacsim_root=TACSIM_ROOT):
-    """Locate pip_prebundle/xensim using tacsim's vendor bundle convention; returns None if not deployed."""
+def find_bundle(tacsim_root=None):
+    """Locate pip_prebundle/xensim using tacsim's vendor bundle convention; returns None if the root is unknown or not deployed."""
+    if tacsim_root is None:
+        return None
     root = pathlib.Path(tacsim_root)
     matches = sorted(p for p in root.glob(BUNDLE_GLOB) if p.is_dir())
     return matches[0] if matches else None
+
+
+def tacsim_root_from_module(module_file):
+    """Derive the tacsim checkout root from an imported tacsim.__init__ path; None if unusable.
+
+    tacsim's own bundle discovery (tacsim/backends/photon/_bootstrap.py) resolves relative to
+    the imported module, so deriving the root the same way guarantees we report the bundle that
+    the worker will actually load rather than one next to this file.
+    """
+    if not isinstance(module_file, str):
+        return None
+    path = pathlib.Path(module_file)
+    if path.name != "__init__.py" or path.parent.name != "tacsim":
+        return None
+    return path.parent.parent
 
 
 def validate_render_config(cfg: dict) -> dict:
@@ -70,6 +86,12 @@ def _probe_python(python: str) -> dict:
         "try:\n"
         " import torch;r['cuda']=bool(torch.cuda.is_available())\n"
         "except Exception:r['cuda']=False\n"
+        # A real import, not find_spec: tacsim/__init__.py is lazy (it registers names in a
+        # _LAZY dict), so this stays cheap while still catching a checkout that resolves but
+        # is broken. That distinction is exactly what the worker needs to know.
+        "try:\n"
+        " import tacsim;r['tacsim']=tacsim.__file__\n"
+        "except Exception as e:r['tacsim']='missing: '+type(e).__name__\n"
         "print(json.dumps(r))\n"
     )
     try:
@@ -81,24 +103,36 @@ def _probe_python(python: str) -> dict:
         return {"error": str(exc)}
 
 
-def check_photon_runtime(python: str = "python3", tacsim_root=TACSIM_ROOT) -> dict:
-    """Item-by-item Photon runtime check report; doctor exits with code 2 if any critical check is False."""
-    root = pathlib.Path(tacsim_root)
-    bundle = find_bundle(root)
+def check_photon_runtime(python: str = "python3", tacsim_root=None) -> dict:
+    """Item-by-item Photon runtime check report; doctor exits with code 2 if any critical check is False.
+
+    Every check describes the interpreter named by `python`. Pass tacsim_root only to inspect a
+    specific checkout; by default the root is derived from what that interpreter actually imports.
+    """
     probe = _probe_python(python)
+    imported = probe.get("tacsim")
+    tacsim_importable = isinstance(imported, str) and not imported.startswith("missing")
+    root = pathlib.Path(tacsim_root) if tacsim_root is not None else tacsim_root_from_module(imported)
+    bundle = find_bundle(root)
     checks = {
-        "tacsim_submodule_present": (root / "tacsim" / "__init__.py").is_file(),
+        "tacsim_importable": tacsim_importable,
+        "tacsim_repo_root_found": root is not None and (root / "tacsim" / "__init__.py").is_file(),
         "xense_bundle_deployed": bundle is not None,
         "python_is_3.10": probe.get("py310", False),
         "cffi_importable": isinstance(probe.get("cffi"), str) and not probe.get("cffi", "").startswith("missing"),
         "pyudev_importable": isinstance(probe.get("pyudev"), str) and not probe.get("pyudev", "").startswith("missing"),
         "cuda_available": bool(probe.get("cuda", False)),
     }
-    critical = ["tacsim_submodule_present", "xense_bundle_deployed", "python_is_3.10",
+    critical = ["tacsim_importable", "tacsim_repo_root_found", "xense_bundle_deployed", "python_is_3.10",
                 "cffi_importable", "pyudev_importable"]
     return {
         "python": python,
-        "tacsim_root": str(root),
+        # None means this interpreter has no importable tacsim at all -- which is the correct
+        # encoding of "this repository does not carry one", not an error.
+        "tacsim_root": str(root) if root is not None else None,
+        # Reported outside `checks` so that every value in `checks` stays a bool: `ready` is
+        # all(checks[k] for k in critical), and a non-empty string would truthy-pass.
+        "tacsim_root_kind": ("git_checkout" if (root / ".git").exists() else "directory") if root is not None else None,
         "xense_bundle": str(bundle) if bundle else None,
         "checks": checks,
         "probe": probe,
@@ -107,5 +141,6 @@ def check_photon_runtime(python: str = "python3", tacsim_root=TACSIM_ROOT) -> di
             "cuda_available is only required for the offline render_tensor path; in-scene integration is not implemented yet.",
             "Running the Photon backend on a headless host needs xvfb-run -a for the vendor OpenGL context.",
             "Simulated tactile output is not real-contact validation.",
+            "tacsim must be importable by --python itself; this repository neither carries a copy nor injects one into sys.path.",
         ],
     }

@@ -2,7 +2,7 @@
 
 Real2Sim 流程仓库。用途是从实拍资料（照片、环拍视频、3D 扫描）搭出尺度正确、相机约定一致、能接物理仿真的场景，并把可复用的流程代码和单个实验室的调试历史分开管理。它不是"给段视频自动生成数字孪生"的工具——资料准备、尺寸确认、相机拟合审核这些环节仍然要人参与。
 
-仓库里有什么：场景 JSON schema 和校验、GLB/规则几何构建与审计、服务器无界面 Cycles 渲染入口、固定内参 PnP、区域 MAE/SSIM/可选 LPIPS、有界外观拟合、冻结快照、LeRobot v3 导入、Newton 状态桥，以及 xArm7/G2/TCP172 物理适配器。本场景用得最多的两条流程单独写了文档：[3D Scanner 扫描背景](docs/SCANNER_BACKGROUND.md) 和 [Azure 焦距+位姿联合拟合](docs/AZURE_CAMERA_ALIGNMENT.md)。
+仓库里有什么：场景 JSON schema 和校验、GLB/规则几何构建与审计、服务器无界面 Cycles 渲染入口、固定内参 PnP、区域 MAE/SSIM/可选 LPIPS、有界外观拟合、冻结快照、LeRobot v3 导入、Newton 状态桥，以及 xArm7/G2/TCP172 物理适配器。本场景用得最多的两条流程单独写了文档：[3D Scanner 扫描背景](docs/SCANNER_BACKGROUND.md) 和 Azure 焦距+位姿联合拟合（`r2s align fit-camera`，配置样例见 `examples/lab_reference/azure/`）。
 
 代码仓库：<https://github.com/Saberlve/R2S2R>
 
@@ -18,6 +18,12 @@ NAS 不会随 Git 下载，需要有对应挂载和读权限。资源布局和�
 
 当前工作副本以 zju 为准。场景 JSON 和 Python 直接在服务器上改，用 `./r2s-server` 跑 Newton 和无界面 Cycles，不需要本地 Blender 或 MCP 插件（Cycles 后端本身还是 bpy，只是不用开桌面）。
 
+**本仓库不自包含。** 它只有流程代码、schema 和配置样例；光 clone 下来跑不了任何一条命令。clone 之前先确认这三项都存在：
+
+1. **Data-MechanicSim** 的 checkout —— 提供 Newton 工程、机器人资产和触觉仿真库 tacsim。本仓库**不**通过子模块或 pip 依赖获取它：tacsim 是内网 Git、无 LICENSE 的内部代码，且已由你使用的解释器安装，所以本仓库既不携带副本，也不向 `sys.path` 注入路径。`--recursive` 不需要（本仓库没有子模块）。获取方式和版本下限见 [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md)。
+2. **NAS 资源挂载** —— 渲染结果、录像、扫描、模型、数据集都在 NAS 上，不随 Git 下载，见 [docs/RESOURCES.md](docs/RESOURCES.md)。
+3. **`R2S_*` 运行时路径** —— 七个路径全部来自环境变量，没有配置文件；缺任何一个命令会直接报出变量名。照抄 `examples/site.example.env` 改成自己的 `site.local.env`（Git 外）再载入。
+
 ```bash
 git clone https://github.com/Saberlve/R2S2R.git
 cd R2S2R
@@ -28,6 +34,15 @@ set -a; . examples/site.zju.env; set +a   # 载入本机运行时路径，见下
 ./r2s-server render --gpu 1 --samples 16  # 实验室当前模板，三相机
 # 完整离线抓取任务及三视角视频，GPU 选空闲的
 ./r2s-server simulate --gpu 1 --frames 481 --stride 15 --samples 16
+```
+
+`doctor` 会逐项打印缺失项该去哪里补。触觉部分单独自检（需要 CUDA 和 OpenGL）：
+
+```bash
+PY=/home/wangshuxun/VLA/data_sim/Data-MechanicSim/.venv/bin/python   # 能被 tacsim 解析的解释器
+PYTHONPATH=src $PY -m real2sim.cli tactile doctor --python "$PY"     # 关键项缺失退出 2
+PYTHONPATH=src xvfb-run -a $PY -m real2sim.cli tactile photon-render \
+  examples/tactile/photon_minimal.json --out /tmp/photon_demo --python "$PY"
 ```
 
 每条命令输出唯一的 `OUTPUT` 目录和 `receipt.json`，默认写到 `../real2sim/server_runs/`。运行时路径全部来自 `R2S_*` 环境变量，`./r2s-server site` 打印当前值，缺任何一个都会直接报出名字；换机器就把 `examples/site.example.env` 复制成 Git 外的 `site.local.env`，填自己的路径再载入。
@@ -123,6 +138,8 @@ $PY -m real2sim.cli case-run "$CASE"
 
 Python 3.10+，核心依赖见 `pyproject.toml`。推荐在独立环境安装 `pip install -e '.[calibration,metrics,test]'`。已有 Newton 的工作站不要重装 Newton，也不要运行 `pip install newton`。zju 验证时直接复用现有环境，通过 `PYTHONPATH=src` 运行；Cycles 用另一个已有 bpy 的环境。
 
+同理**不要 `pip install tacsim` 或把 tacsim 加进本项目依赖**：它没有 PyPI 包、没有 LICENSE、指向内网 Git，声明它会让外网主机上的 `pip install -e .` 直接失败。触觉只在独立子进程里用 `--python` 指定的既有环境，本仓库的依赖列表刻意不含它；要确认那个解释器能否用，跑 `r2s tactile doctor`。
+
 ```bash
 cd /path/to/real2sim-pipeline
 export PYTHONPATH="$PWD/src"
@@ -146,15 +163,16 @@ $PY -m real2sim.cli run examples/minimal/pipeline.json --out runs/example_pipeli
 
 ## 目录
 
-- `src/real2sim/`：四域结构 `scene/`（场景视觉重建）、`align/`（真实-仿真对齐）、`traj/`（轨迹产生）、`tactile/`（触觉接入，预留），外加共享 `contracts.py`、CLI 与工作流引擎；详见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- `src/real2sim/`：四域结构 `scene/`（场景视觉重建）、`align/`（真实-仿真对齐）、`traj/`（轨迹产生）、`tactile/`（触觉接入），外加共享 `contracts.py`、CLI 与工作流引擎；详见 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - `src/real2sim/schemas/`：机器可读输入约束
 - `src/real2sim/workers/`：独立 bpy worker
 - `src/real2sim/traj/adapters/xarm7/`：来自已运行项目的物理适配器；通过环境注入案例/工程路径
-- `external/Data-TacSim/`：git 子仓库，tacsim 触觉仿真库（Photon 传感器后端；无 LICENSE，内部代码）
 - `tools/`：只读数据导入、控制器快照转换、需明确启用才拍摄的相机采集工具
-- `examples/`：最小场景及任务计划，不包含真实图像或大模型
+- `examples/`：最小场景、任务计划及 Photon 渲染配置（`examples/tactile/`），不包含真实图像或大模型
 - `tests/`：坐标、相机 profile、数据语义、防覆盖与桥接检查
 - `docs/`：实际流程、契约、经验边界及验收说明
+
+tacsim（Data-TacSim，Photon 的仿真后端）**不在本仓库内**：它由 `--python` 指定的解释器自行解析，本仓库既不携带副本也不注入 `sys.path`。它是**无 LICENSE 的内部代码**，不得对外再分发；厂商运行时包同样专有。版本下限、获取方式与依赖见 [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md)，来源与许可记录见 [docs/PROVENANCE.md](docs/PROVENANCE.md)。
 
 原始照片、扫描、数据集、模型、运行缓存放在 Git 外；本仓库只管理代码、schema 和配置样例。参考场景的绝对路径只写在部署说明或 `R2S_*` 环境变量里，不嵌入通用模块。
 
@@ -166,7 +184,7 @@ $PY -m real2sim.cli run examples/minimal/pipeline.json --out runs/example_pipeli
 
 物理适配器目前只验证了 xArm7 + G2 + 172mm TCP；其他机器人/夹爪/TCP 需要新适配器。早期数据集逐段接触复现仍有局限；最新测量长条任务及真机日志另见服务器使用手册。历史分析见原始工程报告。生成抓取成功不能替代真实片段的动力学验收。
 
-触觉已接入 Photon（Xense G1-WS，`r2s tactile doctor/photon-render`），但仅限离线合成刺激的渲染通路；Newton 场景内触觉接入尚未实现，仿真触觉输出不作为真实接触验证。轨迹生成提供自有 waypoint 规划器（`plan_trajectory`，见 [docs/ROBOT.md](docs/ROBOT.md)），本轮不做碰撞检查。
+触觉已接入 Photon（Xense G1-WS，`r2s tactile doctor/photon-render`，最小配置见 `examples/tactile/photon_minimal.json`），但仅限离线合成刺激的渲染通路；Newton 场景内触觉接入尚未实现，仿真触觉输出不作为真实接触验证。轨迹生成提供自有 waypoint 规划器（`plan_trajectory`，见 [docs/ROBOT.md](docs/ROBOT.md)），本轮不做碰撞检查。
 
 ## 从 Newton 状态输出视频
 

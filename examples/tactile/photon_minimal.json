@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "sensor": "photon",
+  "outputs": ["depth", "rgb", "marker_flow"],
+  "declared_synthetic": true,
+  "stimulus": {
+    "type": "gaussian",
+    "amplitude_m": 0.0004,
+    "sigma_m": 0.003
+  },
+  "device": "cuda"
+}

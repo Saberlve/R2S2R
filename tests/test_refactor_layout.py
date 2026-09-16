@@ -73,7 +73,11 @@ def test_tactile_describe_contract_marks_photon_offline_integration():
     contract = tactile.describe()
     assert contract['schema_version'] == '1.0-draft'
     assert contract['status'] == 'photon_integrated_offline_only'
-    assert 'Data-TacSim' in contract['sensor']['photon']['backend']
+    backend = contract['sensor']['photon']['backend']
+    assert 'tacsim' in backend
+    # The invariant, not the wording: tacsim is consumed from the target interpreter, so this
+    # repository must not describe itself as carrying a copy.
+    assert 'submodule' not in backend
     assert contract['sensor']['mount'].startswith('fixed')
     assert any('tacsim' in b for b in contract['backends_planned'])
 

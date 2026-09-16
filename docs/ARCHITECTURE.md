@@ -37,11 +37,11 @@ src/real2sim/
 │
 └── tactile/                # 领域 4：触觉接入
     ├── interface.py        #   TactileSensorModel Protocol + 观测契约
-    ├── photon.py           #   Photon 运行时检查与渲染配置校验（纯逻辑）
+    ├── photon.py           #   Photon 运行时检查与渲染配置校验（纯逻辑，不 import tacsim）
     └── photon_worker.py    #   Photon 离线渲染 worker（需 CUDA + OpenGL 环境）
-
-external/Data-TacSim/       # git 子仓库：tacsim 库（Photon 后端），钉在 master 12793a2
 ```
+
+tacsim 不在本仓库的目录树里 —— 它由 `--python` 指定的解释器自行解析，见下。
 
 ## CLI 对照表
 
@@ -73,9 +73,9 @@ external/Data-TacSim/       # git 子仓库：tacsim 库（Photon 后端），�
 
 ## 触觉：Photon 接入（2026-09-15）
 
-- 后端：git 子仓库 `external/Data-TacSim`（tacsim 库，**无 LICENSE，内部代码**）+ 厂商专有包 xense-sim4.5（部署在子仓库 `third_party/` 忽略区，不进 git；部署记录见 PROVENANCE.md）。
-- 运行要求：Python 3.10（厂商 .so 仅 cp310）、CUDA（`NewtonTactileSensor` 强制）、cffi + pyudev（已装入 Data-MechanicSim/.venv）、OpenGL 上下文——headless 主机用 `xvfb-run -a`。
-- 适配进程内把 `external/Data-TacSim` 插到 `sys.path[0]`，保证使用本仓库钉住的 tacsim 副本（主 venv 另有 tacsim 解析到其他工作树）。
+- 后端：**目标解释器解析到的 `tacsim`**（Data-TacSim 库，**无 LICENSE，内部代码**）+ 厂商专有包 xense-sim4.5。厂商包自 tacsim `d5ce700` 起**已提交在上游仓库**的 `third_party/xense_photon/`（裁剪至约 20 MB，保留 `PACKAGE-LICENSES/`）；它仍是专有代码，本仓库不得再分发。来源见 PROVENANCE.md。
+- 运行要求：Python 3.10（厂商 .so 仅 cp310）、CUDA（`NewtonTactileSensor` 强制）、OpenGL 上下文——headless 主机用 `xvfb-run -a`；外加 cffi + pyudev 与 6 个公开 wheel（`cryptography`/`PySide6`/`qtpy`/`Cython`/`assimp-py`，随 PySide6 带入 `shiboken6`）——裁剪版 bundle 不带这些，缺任一个都会在 `require_fem_sensor()` 失败，详见 [DEPENDENCIES.md](DEPENDENCIES.md)。
+- **R2S2R 不向 `sys.path` 注入 tacsim，也不持有副本。** worker 完全按 `--python` 那个解释器的解析结果运行，`r2s tactile doctor --python <py>` 报出实际来源（`tacsim_root` / `xense_bundle`）。这样每个解释器上只有一份 tacsim。
 - 本轮只接通**离线 render_tensor 通路**（合成高斯压痕 → depth/rgb/marker_flow）；Newton 场景内接入（add_to_builder/drive/read_frame）留待下一步。仿真触觉输出不得声称真实接触验证。
 - `photon-render` 与 xarm7 物理作业同级，走显式调用，不进 cases/runner 白名单。
 

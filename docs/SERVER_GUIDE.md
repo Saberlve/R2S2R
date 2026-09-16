@@ -49,7 +49,9 @@ cd /home/wangshuxun/VLA/data_sim/R2S2R
 ./r2s-server inspect
 ```
 
-`doctor` 检查数值/仿真环境、bpy 环境、ffmpeg 与案例路径。`smoke` 使用 CPU 跑最小规则场景；不需要 GPU 或真实相机。`inspect` 打开服务器模板并输出 `scene_inventory.json`，列出 Object、Collection、父子关系、米制变换、灯光名称、材质和纹理是否打包。
+`doctor` 检查数值/仿真环境、bpy 环境、ffmpeg 与案例路径，缺失的路径项会打印该去补什么；触觉后端 tacsim 只作为非关键项报告解析结果，不影响场景渲染类命令。`smoke` 使用 CPU 跑最小规则场景；不需要 GPU 或真实相机。`inspect` 打开服务器模板并输出 `scene_inventory.json`，列出 Object、Collection、父子关系、米制变换、灯光名称、材质和纹理是否打包。
+
+触觉另有独立自检：`r2s tactile doctor --python <解释器>` 逐项检查 tacsim 的解析与运行条件，关键项缺失退出 2，详见 [DEPENDENCIES.md](DEPENDENCIES.md)。
 
 分配自己的工作目录时，可 `git clone /home/wangshuxun/VLA/data_sim/R2S2R YOUR_REPO`，把 `examples/site.zju.env` 复制成自己的 `site.local.env` 并把 `R2S_RUNS_ROOT` 改成自己的输出目录。不要多人直接覆盖同一个实验输出。
 
@@ -148,7 +150,7 @@ $PY -m real2sim.cli case-run /absolute/path/MyScene
 $PY -m real2sim.cli case-status /absolute/path/MyScene
 ```
 
-3D扫描背景与Azure内参不可靠时的焦距/外参联合拟合仍属于关键阶段，不能省略。分别看 [Scanner](SCANNER_BACKGROUND.md)、[Azure](AZURE_CAMERA_ALIGNMENT.md)、[自动化与人工审核](AUTOMATION.md)。必要人工介入是测距端点、语义实体划分、对应点和结果审核；不需要人在 Blender 里拖拽。
+3D扫描背景与Azure内参不可靠时的焦距/外参联合拟合仍属于关键阶段，不能省略。分别看 [Scanner](SCANNER_BACKGROUND.md)、[自动化与人工审核](AUTOMATION.md)；未知内参走 `r2s align fit-camera`，历史 Azure 案例见 `examples/lab_reference/azure/`。必要人工介入是测距端点、语义实体划分、对应点和结果审核；不需要人在 Blender 里拖拽。
 
 ## 故障定位
 

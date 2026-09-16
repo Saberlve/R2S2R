@@ -20,3 +20,7 @@ where = ["src"]
 real2sim = ["schemas/*.json", "workers/*.py", "traj/adapters/xarm7/*.py"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+# Keep `pytest -q` (as documented in README) scoped to this repository's suite. Without this,
+# collection recurses into any checkout placed under external/, and those vendored suites ship
+# their own mutually incompatible tests that fail at import.
+testpaths = ["tests"]

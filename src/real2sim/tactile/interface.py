@@ -15,7 +15,7 @@ CONTRACT_DRAFT = {
     "sensor": {
         "photon": {
             "model": "Xense G1-WS optical tactile sensor (marker-based, 20x11 marker grid)",
-            "backend": "git submodule external/Data-TacSim (tacsim) + vendor package xense-sim4.5 (third_party/, not tracked by git)",
+            "backend": "tacsim (Data-TacSim) resolved from the interpreter passed to --python + vendor package xense-sim4.5 (committed under that checkout's third_party/xense_photon)",
             "integrated_path": "offline render_tensor: synthetic indentation -> depth_m (100x64) / rgb (700x400x3) / marker_flow",
             "not_yet": "in-scene Newton integration (add_to_builder/drive/read_frame) is still to come",
         },

@@ -160,9 +160,10 @@ def main(argv=None):
    cfg=photon.validate_render_config(load(a.config))
    out=pathlib.Path(a.out).resolve()
    if out.exists():raise FileExistsError('A run directory must be new: '+str(out))
-   env=os.environ.copy();env['R2S_TACSIM_ROOT']=str(photon.TACSIM_ROOT)
+   # No env injection: the worker must resolve tacsim from --python itself, so that the
+   # interpreter is the single source of truth for which checkout runs.
    worker=pathlib.Path(__file__).parent/'tactile/photon_worker.py'
-   subprocess.run([a.python,str(worker),str(pathlib.Path(a.config).resolve()),str(out)],env=env,check=True)
+   subprocess.run([a.python,str(worker),str(pathlib.Path(a.config).resolve()),str(out)],check=True)
    return
  if a.group=='run':
   from .runner import run

@@ -16,8 +16,8 @@
 
 ## 触觉与轨迹新增来源（2026-09-15）
 
-- **Data-TacSim**（`https://git.weiyantech.cn/Worlddynamics/Data-TacSim.git`，git 子仓库 `external/Data-TacSim`，钉在 master `12793a2`）：Photon（Xense G1-WS）触觉后端。**该仓库无 LICENSE 文件**，按内部代码/全部权利保留处理，不得对外再分发。
-- **xense-sim4.5 厂商仿真包**（Xense Robotics 专有）：运行时部署在 `external/Data-TacSim/third_party/` 下（子仓库 `.gitignore` 忽略区），**不进 git**。
+- **Data-TacSim**（`https://git.weiyantech.cn/Worlddynamics/Data-TacSim.git`）：Photon（Xense G1-WS）触觉后端。**该仓库无 LICENSE 文件**，按内部代码/全部权利保留处理，不得对外再分发。本仓库**不跟踪也不携带**它：它由兄弟 checkout（Data-MechanicSim 的 `third_party/tacsim`）提供，经 `--python` 指定的解释器消费。本仓库验证过的版本为 `d5ce700`（含下条所述厂商包）；要求 ≥ 该提交，见 [DEPENDENCIES.md](DEPENDENCIES.md)。
+- **xense-sim4.5 厂商仿真包**（Xense Robotics 专有）：自 Data-TacSim `d5ce700` 起**已提交在上游 Data-TacSim 仓库**的 `third_party/xense_photon/`，裁剪至约 20 MB，保留了 `PACKAGE-LICENSES/`。**仍是专有代码，我方不得再分发。** 提交进上游的目的是让 tacsim 从纯 clone 即可用，取代早先"手工部署 1.7 GB dist 到被 gitignore 的 `third_party/`、不进 git"的做法 —— 那份手工部署已随本仓库去重删除。被裁掉的公开 wheel（`cryptography`、`PySide6`、`qtpy`、`Cython`、`assimp-py` 等）改由环境提供，见 [DEPENDENCIES.md](DEPENDENCIES.md)。
 - **`src/real2sim/traj/planner.py`**：自有实现，隔离契约设计（结构化 `Infeasible`、`validate_limits`、FK 校验分离）参考 Data-MechanicSim `newton_gen/motion/planning/interface.py`；不 import `newton_gen.motion.*`，无运行时依赖，便于后续自行修改轨迹生成逻辑。
 
 新场景运行的receipt和环境版本应随成果保存。旧实验数据位于原real2sim目录，不由本仓库清理脚本修改。
