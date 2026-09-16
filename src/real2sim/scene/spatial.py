@@ -1,11 +1,13 @@
-"""测距信息优化空间关系（接口预留）。
+"""Optimize spatial relations from distance measurements (interface reserved).
 
-目标：用激光/卷尺等测距观测约束场景实体的空间关系。
-本轮只提供约束契约与校验；优化求解器留待后续实现。
+Goal: constrain the spatial relations of scene entities using distance observations from a
+laser meter or a tape measure. This round only provides the constraint contract and its
+validation; the optimizer itself comes later.
 
-求解器实现时必须遵守 docs/PIPELINE.md 的变量锁定顺序：
-尺寸 → 内参 → 可信外参/机器人 → 次要相机/背景 → 光照材质。
-测距约束只允许调整当前阶段允许变动的量，禁止借测距误差回移已锁定的相机或机器人基座。
+Any solver must follow the variable locking order in docs/PIPELINE.md:
+size -> intrinsics -> trusted extrinsics/robot -> secondary cameras/background -> lighting and materials.
+A distance constraint may only adjust what the current stage allows, and must never be used to
+move an already locked camera or robot base back into place.
 """
 from __future__ import annotations
 
@@ -16,10 +18,11 @@ from typing import Protocol
 
 @dataclass(frozen=True)
 class DistanceConstraint:
-    """一次两点间测距观测。
+    """One distance measurement between two points.
 
-    entity_a/entity_b：scene.json 中资产或相机的 id；distance_m 单位米；
-    sigma_m 为测距不确定度（1σ，米）；evidence 指向原始记录（如照片/笔记路径）。
+    entity_a/entity_b are ids of assets or cameras in scene.json; distance_m is in metres;
+    sigma_m is the measurement uncertainty (1 sigma, in metres); evidence points at the
+    original record, such as a photo or note path.
     """
 
     entity_a: str
@@ -30,9 +33,9 @@ class DistanceConstraint:
 
 
 def validate_constraints(constraints, entity_ids) -> list[dict]:
-    """校验测距约束集合；entity_ids 为场景中可引用的实体 id 集合。
+    """Validate a set of distance constraints; entity_ids are the entity ids the scene allows.
 
-    通过时返回归一化后的 dict 列表；任何一条非法即抛 ValueError。
+    Returns a list of normalized dicts when it passes; any single bad entry raises ValueError.
     """
     ids = set(entity_ids)
     out = []
@@ -54,18 +57,20 @@ def validate_constraints(constraints, entity_ids) -> list[dict]:
 
 
 class SpatialOptimizer(Protocol):
-    """测距优化求解器接口（预留，未实现）。"""
+    """Distance-based spatial optimizer interface (reserved, not implemented)."""
 
     def optimize(self, scene: dict, constraints: list[dict]) -> dict:
-        """返回调整后的 scene.json 副本与报告；不得就地修改输入。
+        """Return an adjusted copy of scene.json plus a report; never modify the input in place.
 
-        实现要求：显式声明每个被调整变量的锁定状态，报告中保留残差与不确定度。
+        Requirement: state the lock status of every adjusted variable explicitly, and keep the
+        residuals and uncertainties in the report.
         """
         ...
 
 
 def optimize_spatial(scene: dict, constraints: list[dict]) -> dict:
     raise NotImplementedError(
-        "测距优化求解器为预留接口，本轮仅提供约束契约与 validate_constraints；"
-        "实现前请先阅读 docs/PIPELINE.md 的变量锁定顺序"
+        "The distance-based spatial optimizer is a reserved interface; this round only provides "
+        "the constraint contract and validate_constraints. Read the variable locking order in "
+        "docs/PIPELINE.md before implementing it."
     )

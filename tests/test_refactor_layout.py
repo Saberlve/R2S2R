@@ -69,10 +69,11 @@ def test_reserved_interfaces_raise_not_implemented():
         modeling.build_draft({}, '/tmp/anywhere')
 
 
-def test_tactile_describe_contract_is_explicitly_reserved():
+def test_tactile_describe_contract_marks_photon_offline_integration():
     contract = tactile.describe()
     assert contract['schema_version'] == '1.0-draft'
-    assert contract['status'] == 'reserved_not_implemented'
+    assert contract['status'] == 'photon_integrated_offline_only'
+    assert 'Data-TacSim' in contract['sensor']['photon']['backend']
     assert contract['sensor']['mount'].startswith('fixed')
     assert any('tacsim' in b for b in contract['backends_planned'])
 

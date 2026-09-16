@@ -1,9 +1,0 @@
-{
-  "nas_root": "/run/determined/NAS1/public/wangshuxun/r2s2r_resources",
-  "copied_files_verified": 14076,
-  "copied_bytes_verified": 8881557800,
-  "pytest_passed": 26,
-  "nas_render_receipt": "/run/determined/NAS1/public/wangshuxun/r2s2r_resources/real2sim/server_runs/nas_publication_render_20260914/receipt.json",
-  "nas_render_status": "complete",
-  "git_policy": "No render outputs or large raw resources; only tiny input annotation mask allowed."
-}

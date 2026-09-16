@@ -1,8 +1,9 @@
-"""腕部相机标定核心：TCP→相机手眼变换的组合与校验。
+"""Wrist-camera calibration core: composing and checking the TCP-to-camera hand-eye transform.
 
-T_A_B 约定与 docs/CONTRACTS.md 一致：T_flange_camera = T_flange_tcp @ T_tcp_camera。
-控制器快照的平移单位为毫米，组合前显式转换为米。
-本模块只做数学与记录构造；.blend 写入由 tools/adopt_wrist_tcp_calibration.py 完成。
+The T_A_B convention matches docs/CONTRACTS.md: T_flange_camera = T_flange_tcp @ T_tcp_camera.
+Controller snapshot translations are in millimetres and are converted explicitly before composing.
+This module only does the math and builds the record; the .blend write lives in
+tools/adopt_wrist_tcp_calibration.py.
 """
 from __future__ import annotations
 

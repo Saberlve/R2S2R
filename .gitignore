@@ -6,7 +6,7 @@ __pycache__/
 data/
 runs/
 .cache/
-site.local.json
+site.local.env
 *.blend*
 *.mp4
 *.heic
@@ -28,9 +28,6 @@ resources/
 *.usd
 *.usda
 *.usdc
-validation/**/*.png
-validation/**/*.jpg
-validation/**/*.jpeg
 
 # Raster outputs and binary assets remain on NAS.
 *.png

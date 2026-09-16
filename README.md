@@ -21,7 +21,8 @@ NAS 不会随 Git 下载，需要有对应挂载和读权限。资源布局和�
 ```bash
 git clone https://github.com/Saberlve/R2S2R.git
 cd R2S2R
-cp examples/site.zju.json site.local.json
+set -a; . examples/site.zju.env; set +a   # 载入本机运行时路径，见下
+./r2s-server site                    # 确认当前解析到的路径
 ./r2s-server doctor                  # 检查已有环境，不安装或替换依赖
 ./r2s-server smoke --samples 4       # CPU 最小场景：构建、审计、渲染
 ./r2s-server render --gpu 1 --samples 16  # 实验室当前模板，三相机
@@ -29,12 +30,11 @@ cp examples/site.zju.json site.local.json
 ./r2s-server simulate --gpu 1 --frames 481 --stride 15 --samples 16
 ```
 
-每条命令输出唯一的 `OUTPUT` 目录和 `receipt.json`，默认写到 `../real2sim/server_runs/`。环境路径由 Git 外的 `site.local.json` 指定；换机器就复制 `examples/site.example.json` 填自己的路径。
+每条命令输出唯一的 `OUTPUT` 目录和 `receipt.json`，默认写到 `../real2sim/server_runs/`。运行时路径全部来自 `R2S_*` 环境变量，`./r2s-server site` 打印当前值，缺任何一个都会直接报出名字；换机器就把 `examples/site.example.env` 复制成 Git 外的 `site.local.env`，填自己的路径再载入。
 
 - [服务器使用手册](docs/SERVER_GUIDE.md)：场景编辑、渲染、仿真、输入输出、日志与故障定位
 - [依赖与部署](docs/DEPENDENCIES.md)：两个 Python 环境、精确版本、源码依赖及新机器安装步骤
 - [本地迁移清单](docs/LOCAL_MIGRATION.md)：文件位置、完整性验证、历史原件缺失和冲突处理
-- [运行验证](docs/SERVER_VALIDATION.md)：本轮实际执行的命令与结果
 
 当前参考场景是 `WristCameraAlignmentV1/runtime/`：合并了背景扫描和机器人调色，腕部外参用最新录像拟合。腕部图像是原生 640×480、raw 方向；另一路录像重投影 RMSE 约 10.7 px，所以标为估计值。原始视觉 baseline 留在 `baseline/`。
 
@@ -116,7 +116,7 @@ $PY -m real2sim.cli case-run "$CASE"
 1. 读 [docs/PIPELINE.md](docs/PIPELINE.md)，了解流程与阶段门槛。
 2. 按 [docs/CONTRACTS.md](docs/CONTRACTS.md) 准备新场景资料。
 3. 跑通下面的最小例子，再替换 `examples/minimal/scene.json` 中的资产、米制尺寸、相机和灯光。
-4. 外观优化见 [docs/APPEARANCE.md](docs/APPEARANCE.md)，实际运行证据见 [docs/VALIDATION.md](docs/VALIDATION.md)。
+4. 外观优化见 [docs/APPEARANCE.md](docs/APPEARANCE.md)。
 5. 机器人部分另读 [docs/ROBOT.md](docs/ROBOT.md)。
 
 ## 环境
@@ -150,12 +150,13 @@ $PY -m real2sim.cli run examples/minimal/pipeline.json --out runs/example_pipeli
 - `src/real2sim/schemas/`：机器可读输入约束
 - `src/real2sim/workers/`：独立 bpy worker
 - `src/real2sim/traj/adapters/xarm7/`：来自已运行项目的物理适配器；通过环境注入案例/工程路径
+- `external/Data-TacSim/`：git 子仓库，tacsim 触觉仿真库（Photon 传感器后端；无 LICENSE，内部代码）
 - `tools/`：只读数据导入、控制器快照转换、需明确启用才拍摄的相机采集工具
 - `examples/`：最小场景及任务计划，不包含真实图像或大模型
 - `tests/`：坐标、相机 profile、数据语义、防覆盖与桥接检查
 - `docs/`：实际流程、契约、经验边界及验收说明
 
-原始照片、扫描、数据集、模型、运行缓存放在 Git 外；本仓库只管理代码、schema、配置样例和小型验证记录。参考场景的绝对路径只写在部署说明或 `site.local.json`，不嵌入通用模块。
+原始照片、扫描、数据集、模型、运行缓存放在 Git 外；本仓库只管理代码、schema 和配置样例。参考场景的绝对路径只写在部署说明或 `R2S_*` 环境变量里，不嵌入通用模块。
 
 ## 当前边界
 
@@ -163,7 +164,9 @@ $PY -m real2sim.cli run examples/minimal/pipeline.json --out runs/example_pipeli
 
 通用渲染器目前正式输出 RGB 与有效像素 mask，不输出深度，因此不存在把欧氏射线距离当成光轴 Z 深度的默认行为。需要深度或实例 ID 时要增加对应后端并通过专门测试再启用。
 
-物理适配器目前只验证了 xArm7 + G2 + 172mm TCP；其他机器人/夹爪/TCP 需要新适配器。早期数据集逐段接触复现仍有局限；最新测量长条任务及真机日志另见服务器使用手册。历史分析见 [docs/LESSONS.md](docs/LESSONS.md)。生成抓取成功不能替代真实片段的动力学验收。
+物理适配器目前只验证了 xArm7 + G2 + 172mm TCP；其他机器人/夹爪/TCP 需要新适配器。早期数据集逐段接触复现仍有局限；最新测量长条任务及真机日志另见服务器使用手册。历史分析见原始工程报告。生成抓取成功不能替代真实片段的动力学验收。
+
+触觉已接入 Photon（Xense G1-WS，`r2s tactile doctor/photon-render`），但仅限离线合成刺激的渲染通路；Newton 场景内触觉接入尚未实现，仿真触觉输出不作为真实接触验证。轨迹生成提供自有 waypoint 规划器（`plan_trajectory`，见 [docs/ROBOT.md](docs/ROBOT.md)），本轮不做碰撞检查。
 
 ## 从 Newton 状态输出视频
 

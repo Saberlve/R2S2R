@@ -3,6 +3,10 @@
 
 Run this with the configured Blender/Cycles Python because the copied .blend
 must be updated together with its JSON bindings.
+
+This tool writes only inside --output-case. Switching the pipeline to the new
+runtime is a manual operator step: set R2S_REFERENCE_TEMPLATE (and the scene
+paths) yourself. The values to use are printed at the end.
 """
 from __future__ import annotations
 
@@ -72,8 +76,6 @@ def main() -> None:
     parser.add_argument("--output-case", type=Path, required=True)
     parser.add_argument("--measurement", type=Path, required=True)
     parser.add_argument("--controller-calibration", type=Path, required=True)
-    parser.add_argument("--activate-scene", type=Path)
-    parser.add_argument("--activate-site", type=Path)
     args = parser.parse_args()
 
     source = args.source_case.resolve()
@@ -115,34 +117,25 @@ def main() -> None:
 
     report = record["comparison_to_previous_video_fit"]
     (output / "REPORT.md").write_text(
-        "# 腕部相机 TCP 标定候选\n\n"
-        f"- 相对当前录像拟合外参：光心平移 {report['optical_center_distance_mm']:.3f} mm，"
-        f"旋转 {report['rotation_distance_deg']:.3f}°。\n"
-        f"- 法兰坐标平移差 XYZ：{[round(x, 3) for x in report['optical_center_delta_flange_xyz_mm']]} mm。\n"
-        f"- 标定工具报告留出最大误差：{record['reported_leaveout_max_error']}。\n"
-        "- 当前状态：已写入独立候选模板；仍需用未参与标定的同步实拍和机器人状态做重投影评估。\n",
+        "# Wrist Camera TCP Calibration Candidate\n\n"
+        f"- Against the current video-fit extrinsics: optical centre shift "
+        f"{report['optical_center_distance_mm']:.3f} mm, rotation {report['rotation_distance_deg']:.3f} deg.\n"
+        f"- Flange-frame translation difference XYZ: {[round(x, 3) for x in report['optical_center_delta_flange_xyz_mm']]} mm.\n"
+        f"- Leave-out max error reported by the calibration tool: {record['reported_leaveout_max_error']}.\n"
+        "- Status: written as an independent candidate template; it still needs a reprojection "
+        "evaluation against synchronised real images and robot states that were not part of the calibration.\n",
         encoding="utf-8",
     )
 
-    if args.activate_scene:
-        scene_path = args.activate_scene.resolve()
-        scene = load(scene_path)
-        rel = output.relative_to(scene_path.parent)
-        scene.update({
-            "version": "ServerBaseline_WristTcpCalibrationV1_20260914",
-            "scene": str(rel / "runtime" / "Baseline.blend"),
-            "runtime_manifest": str(rel / "runtime" / "runtime_manifest.json"),
-            "camera_config": str(rel / "runtime" / "camera_config.json"),
-            "render_script": str(rel / "runtime" / "render.py"),
-            "scope": "Server-authoritative scene; wrist optical pose uses independent TCP hand-eye calibration; pending independent scene reprojection validation.",
-            "previous_visual_baseline": "WristCameraAlignmentV1/runtime/Baseline.blend",
-        })
-        save(scene_path, scene)
-    if args.activate_site:
-        site_path = args.activate_site.resolve()
-        site = load(site_path)
-        site["reference_template"] = str(runtime)
-        save(site_path, site)
+    print(
+        "Manual activation required; this tool does not modify config files.\n"
+        "Update these paths yourself, then re-run the server entry points:\n"
+        f"  export R2S_REFERENCE_TEMPLATE={runtime}\n"
+        f"  scene scene              = {runtime / 'Baseline.blend'}\n"
+        f"  scene runtime_manifest   = {runtime / 'runtime_manifest.json'}\n"
+        f"  scene camera_config      = {runtime / 'camera_config.json'}\n"
+        f"  scene render_script      = {runtime / 'render.py'}\n"
+    )
     print(json.dumps(record, indent=2, ensure_ascii=False))
 
 

@@ -1,1 +1,1 @@
-"""视频 + Blender + Agent 初始场景建模接口（本轮仅契约，见 interface.py）。"""
+"""Video + Blender + Agent initial scene modeling interface (contract only for now; see interface.py)."""

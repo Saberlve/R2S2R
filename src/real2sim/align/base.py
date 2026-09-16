@@ -1,7 +1,8 @@
-"""基座坐标系对齐：控制器快照归一化与 scene_config 基座标定校验。
+"""Base-frame alignment: controller snapshot normalization and scene_config base checks.
 
-坐标约定遵循 docs/CONTRACTS.md：T_A_B 把 B 系坐标列向量映到 A 系；单位米/弧度。
-控制器快照 end_transform 平移为毫米，归一化时显式转换为米。
+The coordinate convention follows docs/CONTRACTS.md: T_A_B maps column vectors in B into A;
+units are metres and radians. The controller snapshot stores end_transform translation in
+millimetres, so normalization converts it to metres explicitly.
 """
 from __future__ import annotations
 
@@ -40,9 +41,9 @@ def _vec3(value, name, positive=False):
 
 
 def validate_scene_config(cfg: dict) -> dict:
-    """校验 case scene_config.json 的基座对齐相关字段（docs/ROBOT.md 契约）。
+    """Validate the base-alignment fields of a case scene_config.json (docs/ROBOT.md contract).
 
-    只校验，不修改输入；通过时返回报告字典。
+    Checks only; the input is never modified. Returns a report dict when it passes.
     """
     missing = [k for k in _REQUIRED_KEYS if k not in cfg]
     if missing:

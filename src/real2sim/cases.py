@@ -57,27 +57,27 @@ def intake(case):
             paths.append((case / path).resolve())
     cameras = data.get('cameras', [])
     if not cameras:
-        missing.append('至少一台固定相机的原始参考图')
+        missing.append('At least one fixed camera with a raw reference image')
     for c in cameras:
-        require(c.get('image'), '相机原图: ' + c.get('id', '?'))
+        require(c.get('image'), 'camera image: ' + c.get('id', '?'))
         if not c.get('native_wh') or c.get('pixel_ops') is None:
-            warnings.append('相机分辨率/裁剪流程待核实: ' + c.get('id', '?'))
+            warnings.append('camera resolution/crop pipeline not yet verified: ' + c.get('id', '?'))
         if not c.get('intrinsics_file'):
-            warnings.append('内参未知，需要 image_fitted 路径和独立验证: ' + c.get('id', '?'))
+            warnings.append('intrinsics unknown; needs the image_fitted path and independent validation: ' + c.get('id', '?'))
         else:
-            require(c['intrinsics_file'], '内参文件')
-    require(data.get('room_video'), '房间环拍原视频')
+            require(c['intrinsics_file'], 'intrinsics file')
+    require(data.get('room_video'), 'room walkthrough video')
     scans = data.get('scanner_exports', [])
     if not scans:
-        missing.append('包含模型和纹理的 Scanner 原始导出包')
+        missing.append('Scanner raw export package with model and texture')
     for s in scans:
-        require(s, 'Scanner 导出包: ' + s)
+        require(s, 'Scanner export package: ' + s)
     dims = data.get('table_size_m')
     if not isinstance(dims, list) or len(dims) != 3 or not all(
         isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v) and v > 0 for v in dims):
-        missing.append('实验桌长宽高 table_size_m，单位米')
+        missing.append('table_size_m (table length, width and height) in metres')
     if not data.get('anchors'):
-        warnings.append('缺少桌到墙/门框等距离锚点，背景布局可能有歧义')
+        warnings.append('no distance anchors from the table to walls or door frames; the background layout may be ambiguous')
     return {'missing': missing, 'warnings': warnings,
             'raw_sha256': {str(p): sha(p) for p in paths}}
 

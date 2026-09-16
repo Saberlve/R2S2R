@@ -1,1 +1,1 @@
-"""场景视觉重建：扫描注册/烘焙、外观拟合、评分、视频、空间关系与初始建模接口。"""
+"""Scene visual reconstruction: scan register/bake, appearance fitting, scoring, video, spatial constraints and initial modeling interfaces."""

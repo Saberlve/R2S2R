@@ -38,6 +38,31 @@ $PY -m real2sim.cli traj xarm7 --case /path/to/case --newton-project /path/to/Da
 
 先跑所有episode运动学，再做无接触跟踪，再做接触。标定/关节范围必须覆盖本次轨迹。生成示例`generate_grasp`使用episode000的初始姿态和配置中的单个box，不是通用任务规划器；`import_eef`接收自主TCP轨迹。当前simulate_replay支持单桌+单box物理任务；多物体、其他碰撞几何需要扩展SceneSpec adapter后测试。
 
+## 轨迹规划 `plan_trajectory`
+
+自有 waypoint 规划器（`real2sim.traj.planner`，设计参考 newton_gen 但无运行时依赖）+ Newton IK 逐帧求解。**本轮不做碰撞检查**。
+
+```bash
+$PY -m real2sim.cli traj xarm7 --case /path/to/case --newton-project /path/to/Data-MechanicSim plan_trajectory -- --task /path/to/task.json --out /path/to/new_out
+```
+
+task JSON 契约（基座坐标系，四元数 xyzw，单位米/弧度/秒）：
+
+```json
+{
+  "schema_version": "1.0",
+  "waypoints": [
+    {"position_m": [0.45, 0.0, 0.8], "quaternion_xyzw": [0, 1, 0, 0], "gripper": 0.0, "duration_s": 3.0},
+    {"position_m": [0.45, 0.0, 0.75], "quaternion_xyzw": [0, 1, 0, 0], "gripper": 1.0, "duration_s": 2.0}
+  ],
+  "q_start_rad": [可选，缺省取 episodes/000.npz 首帧],
+  "fps": 30,
+  "vel_limits_rad_s": [可选，逐关节], "acc_limits_rad_s2": [可选，逐关节]
+}
+```
+
+waypoints[0] 是首个目标（起点由 q_start 的 FK 自动前置）。帧间隔严格为 1/fps；每段 `duration_s` 量化到整帧（误差 ≤ 1/(2·fps)），`plan_report.json` 记录实际时长与 `time_step_contract`。成功输出 `episode.npz`（time/q/action_q/gripper/action_gripper + base 系 tcp_m/tcp_quat_xyzw）、`manifest.json`、`plan_report.json`（FK 误差、限位违规）。拒绝语义：IK 不收敛、FK 超 1mm/0.1° 门禁或限位违规时只写 `plan_report.json`（reason/detail）并以退出码 2 结束，**不产出轨迹**。规划成功不等于真实轨迹动力学验证，须再经 simulate_replay 门禁。
+
 ## 当前未验证能力
 
 自碰撞沿用旧加载器设置，未完整开启；真实夹爪力/开合响应未辨识；真实长条回放不能通过可信接触门槛。`trajectory_adapter --execute`明确拒绝真机执行。框架没有SDK运动入口，也没有调用会enable/reset的采集类。

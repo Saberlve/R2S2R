@@ -28,7 +28,7 @@ def allowlisted(argv):
 
 def build_parser():
  p=argparse.ArgumentParser(prog='r2s');sub=p.add_subparsers(dest='group',required=True)
- s=sub.add_parser('scene',help='场景视觉重建');sp=s.add_subparsers(dest='verb',required=True)
+ s=sub.add_parser('scene',help='Scene visual reconstruction');sp=s.add_subparsers(dest='verb',required=True)
  v=sp.add_parser('validate');v.add_argument('scene')
  for name in ['build','render','audit']:
   v=sp.add_parser(name);v.add_argument('--scene',required=True);v.add_argument('--out',required=True);v.add_argument('--blend');v.add_argument('--python',required=True,help='Existing Python with bpy; do not install/replace Newton');v.add_argument('--samples',type=int,default=32);v.add_argument('--states');v.add_argument('--parameters');v.add_argument('--mcp',help='Optional host:port; paths must be visible to Blender')
@@ -38,17 +38,19 @@ def build_parser():
  v=sp.add_parser('fit-appearance');v.add_argument('config');v.add_argument('--out',required=True)
  v=sp.add_parser('score');v.add_argument('--real',required=True);v.add_argument('--sim',required=True);v.add_argument('--mask',required=True);v.add_argument('--out',required=True);v.add_argument('--lpips-cache')
  v=sp.add_parser('video');v.add_argument('--manifest',required=True);v.add_argument('--cameras',nargs='+',required=True);v.add_argument('--out',required=True);v.add_argument('--ffmpeg',default='ffmpeg')
- v=sp.add_parser('draft-model',help='视频初始建模（接口预留）');v.add_argument('--intake',required=True);v.add_argument('--out',required=True)
- v=sp.add_parser('spatial-fit',help='测距优化空间关系（接口预留）');v.add_argument('config');v.add_argument('--out',required=True)
- a=sub.add_parser('align',help='真实-仿真对齐');ap=a.add_subparsers(dest='verb',required=True)
- v=ap.add_parser('calibrate',help='固定相机 PnP 外参标定');v.add_argument('--scene',required=True);v.add_argument('--camera',required=True);v.add_argument('--points',required=True);v.add_argument('--out',required=True)
- v=ap.add_parser('fit-camera',help='内参未知：焦距+位姿联合拟合');v.add_argument('config');v.add_argument('--out',required=True)
- v=ap.add_parser('base-check',help='校验 scene_config 基座对齐字段');v.add_argument('config')
- t=sub.add_parser('traj',help='轨迹产生');tp=t.add_subparsers(dest='verb',required=True)
+ v=sp.add_parser('draft-model',help='Initial video modeling (interface reserved)');v.add_argument('--intake',required=True);v.add_argument('--out',required=True)
+ v=sp.add_parser('spatial-fit',help='Optimize spatial relations from distance measurements (interface reserved)');v.add_argument('config');v.add_argument('--out',required=True)
+ a=sub.add_parser('align',help='Real-to-sim alignment');ap=a.add_subparsers(dest='verb',required=True)
+ v=ap.add_parser('calibrate',help='Fixed-camera PnP extrinsic calibration');v.add_argument('--scene',required=True);v.add_argument('--camera',required=True);v.add_argument('--points',required=True);v.add_argument('--out',required=True)
+ v=ap.add_parser('fit-camera',help='Intrinsics unknown: joint focal length and pose fit');v.add_argument('config');v.add_argument('--out',required=True)
+ v=ap.add_parser('base-check',help='Validate the scene_config base alignment fields');v.add_argument('config')
+ t=sub.add_parser('traj',help='Trajectory generation');tp=t.add_subparsers(dest='verb',required=True)
  v=tp.add_parser('convert');v.add_argument('--input',required=True);v.add_argument('--calibration',required=True);v.add_argument('--out',required=True)
- v=tp.add_parser('xarm7');v.add_argument('job',choices=['validate_kinematics','simulate_replay','generate_grasp','gripper_mapping','import_eef','trajectory_adapter']);v.add_argument('--case',required=True);v.add_argument('--newton-project',required=True);v.add_argument('job_args',nargs=argparse.REMAINDER)
- c=sub.add_parser('tactile',help='触觉接入（接口预留）');cp=c.add_subparsers(dest='verb',required=True)
- cp.add_parser('describe',help='打印触觉契约草案')
+ v=tp.add_parser('xarm7');v.add_argument('job',choices=['validate_kinematics','simulate_replay','generate_grasp','gripper_mapping','import_eef','trajectory_adapter','plan_trajectory']);v.add_argument('--case',required=True);v.add_argument('--newton-project',required=True);v.add_argument('job_args',nargs=argparse.REMAINDER)
+ c=sub.add_parser('tactile',help='Tactile integration');cp=c.add_subparsers(dest='verb',required=True)
+ cp.add_parser('describe',help='Print the tactile contract')
+ v=cp.add_parser('doctor',help='Check the Photon runtime item by item');v.add_argument('--python',default='python3',help='Target interpreter with tacsim dependencies')
+ v=cp.add_parser('photon-render',help='Photon offline tactile render (synthetic stimulus)');v.add_argument('config');v.add_argument('--out',required=True);v.add_argument('--python',required=True,help='Existing Python 3.10 with tacsim deps; do not install/replace Newton')
  v=sub.add_parser('case-init');v.add_argument('case');v.add_argument('--cycles-python',required=True)
  v=sub.add_parser('case-run');v.add_argument('case');v.add_argument('--retry-failed',action='store_true')
  v=sub.add_parser('case-status');v.add_argument('case')
@@ -109,7 +111,7 @@ def main(argv=None):
    cfg=load(a.config);scene=validate_scene(load((pathlib.Path(a.config).resolve().parent/cfg['scene']).resolve()))
    ids={x['id'] for x in scene['assets']}|{c['id'] for c in scene['cameras']}
    constraints=spatial.validate_constraints(cfg['constraints'],ids)
-   print(json.dumps({'status':'reserved_not_implemented','constraints_valid':True,'constraints':constraints,'detail':'测距优化求解器为预留接口；契约校验已通过'},ensure_ascii=False,indent=2));sys.exit(2)
+   print(json.dumps({'status':'reserved_not_implemented','constraints_valid':True,'constraints':constraints,'detail':'The distance optimizer is a reserved interface; constraint validation passed'},ensure_ascii=False,indent=2));sys.exit(2)
  if a.group=='align':
   if a.verb=='calibrate':
    from .align.cameras import fit_extrinsics
@@ -141,11 +143,27 @@ def main(argv=None):
    if s.get('tcp_offset_m')!=[0,0,.172]:raise ValueError('This validated physical adapter supports xArm7 G2 TCP172 only; implement/test a new robot adapter for other TCPs')
    env=os.environ.copy();env['R2S_CASE_ROOT']=str(root);env['R2S_NEWTON_PROJECT']=str(project)
    args=a.job_args[1:] if a.job_args[:1]==['--'] else a.job_args
-   subprocess.run([str(project/'.venv/bin/python'),str(pathlib.Path(__file__).parent/'traj/adapters/xarm7'/(a.job+'.py')),*args],env=env,check=True)
+   try:
+    subprocess.run([str(project/'.venv/bin/python'),str(pathlib.Path(__file__).parent/'traj/adapters/xarm7'/(a.job+'.py')),*args],env=env,check=True)
+   except subprocess.CalledProcessError as e:
+    sys.exit(e.returncode)  # pass the adapter exit code through (e.g. 2=Infeasible from plan_trajectory)
    return
  if a.group=='tactile':
-  from .tactile import interface
-  print(json.dumps(interface.describe(),ensure_ascii=False,indent=2));return
+  if a.verb=='describe':
+   from .tactile import interface
+   print(json.dumps(interface.describe(),ensure_ascii=False,indent=2));return
+  if a.verb=='doctor':
+   from .tactile import photon
+   report=photon.check_photon_runtime(a.python);print(json.dumps(report,ensure_ascii=False,indent=2));sys.exit(0 if report['ready'] else 2)
+  if a.verb=='photon-render':
+   from .tactile import photon
+   cfg=photon.validate_render_config(load(a.config))
+   out=pathlib.Path(a.out).resolve()
+   if out.exists():raise FileExistsError('A run directory must be new: '+str(out))
+   env=os.environ.copy();env['R2S_TACSIM_ROOT']=str(photon.TACSIM_ROOT)
+   worker=pathlib.Path(__file__).parent/'tactile/photon_worker.py'
+   subprocess.run([a.python,str(worker),str(pathlib.Path(a.config).resolve()),str(out)],env=env,check=True)
+   return
  if a.group=='run':
   from .runner import run
   run(a.plan,a.out);return

@@ -1,1 +1,1 @@
-"""真实-仿真对齐：固定相机标定、内参未知拟合、腕部相机标定、基座坐标系对齐。"""
+"""Real-to-sim alignment: fixed-camera calibration, unknown-intrinsics fitting, wrist-camera calibration, base-frame alignment."""

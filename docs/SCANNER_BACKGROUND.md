@@ -60,7 +60,7 @@ $PY -m real2sim.cli scan-bake /data/door_bake.json --out runs/door_asset --pytho
 
 ## 本轮复跑边界
 
-本轮使用原始OBJ/JPG重新跑通了门与绿布，包括UV烘焙、纹理修补分支、闭合GLB打包、通用scene导入和Cycles预览。绿布裁剪基准用原扫描重新估计，仍为示例资产空间；未将新候选覆盖已冻结房间。原有手工房间配准属于历史采用结果，新的通用register另用已知变换测试验证。详见SCANNER_AZURE_VALIDATION.md。
+本轮使用原始OBJ/JPG重新跑通了门与绿布，包括UV烘焙、纹理修补分支、闭合GLB打包、通用scene导入和Cycles预览。绿布裁剪基准用原扫描重新估计，仍为示例资产空间；未将新候选覆盖已冻结房间。原有手工房间配准属于历史采用结果，新的通用register另用已知变换测试验证。
 
 GLB可能为UV/法向接缝复制顶点，重新导入后出现拓扑边界。scanner产物显式设置weld_distance_m=1e-7，build仅在该独立实体内部合并近乎完全重合的顶点，保留逐角UV，再重新检查闭合；不会跨物体焊接，也不使用毫米级容差吞掉薄层。
 

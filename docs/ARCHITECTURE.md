@@ -29,13 +29,18 @@ src/real2sim/
 │   └── base.py             #   基座坐标系对齐：scene_config 校验 + 控制器快照归一化
 │
 ├── traj/                   # 领域 3：轨迹产生
-│   ├── interface.py        #   【接口预留】TrajectoryGenerator / EngineAdapter / 引擎注册表
+│   ├── interface.py        #   TrajectoryGenerator / EngineAdapter / 引擎注册表
+│   ├── planner.py          #   自有 waypoint 规划核心（纯 numpy；设计参考 newton_gen，无运行时依赖）
 │   ├── trajectory.py       #   硬件无关 FK + episode 转换（convert）
 │   ├── bridge.py           #   Newton 状态 → 渲染 state JSONL
-│   └── adapters/xarm7/     #   Newton 引擎实现（xArm7 + G2 + TCP172，逻辑未改）
+│   └── adapters/xarm7/     #   Newton 引擎实现（含 plan_trajectory 规划作业）
 │
-└── tactile/                # 领域 4：触觉接入（全部预留）
-    └── interface.py        #   【接口预留】TactileSensorModel + 契约草案（tacsim 等）
+└── tactile/                # 领域 4：触觉接入
+    ├── interface.py        #   TactileSensorModel Protocol + 观测契约
+    ├── photon.py           #   Photon 运行时检查与渲染配置校验（纯逻辑）
+    └── photon_worker.py    #   Photon 离线渲染 worker（需 CUDA + OpenGL 环境）
+
+external/Data-TacSim/       # git 子仓库：tacsim 库（Photon 后端），钉在 master 12793a2
 ```
 
 ## CLI 对照表
@@ -53,8 +58,10 @@ src/real2sim/
 | `r2s fit-camera` | `r2s align fit-camera`（内参未知联合拟合） |
 | —（新） | `r2s align base-check`（校验 scene_config 基座对齐字段） |
 | `r2s convert` | `r2s traj convert` |
-| `r2s xarm7 <job>` | `r2s traj xarm7 <job>`（TCP172 守卫不变） |
-| —（新） | `r2s tactile describe`（打印触觉契约草案） |
+| `r2s xarm7 <job>` | `r2s traj xarm7 <job>`（TCP172 守卫不变；job 含 `plan_trajectory`，见 ROBOT.md） |
+| —（新） | `r2s tactile describe`（打印触觉契约） |
+| —（新） | `r2s tactile doctor [--python]`（Photon 运行时逐项检查，关键项缺失退出 2） |
+| —（新） | `r2s tactile photon-render <config> --out --python`（离线触觉渲染，合成刺激） |
 | 顶层不变 | `case-init / case-run / case-status / case-review / run / inventory / check-inventory / freeze` |
 
 `cases.py` 与 `runner.py` 的命令白名单统一来自 `cli.allowlisted()`；旧写法在白名单检查前经 `cli.normalize_command()` 归一化，NAS 上既有 workflow.json 与 pipeline 计划无需修改。
@@ -63,12 +70,22 @@ src/real2sim/
 
 - **scene/modeling**：视频 + Blender + Agent 初始建模。产物只能是 quality=`estimated` 的草稿 scene.json；禁止覆盖既有场景与冻结基线。
 - **scene/spatial**：测距约束 `DistanceConstraint(entity_a, entity_b, distance_m, sigma_m, evidence)`；`validate_constraints()` 已实现，`optimize_spatial()` 求解器预留。实现时必须遵守 PIPELINE.md 变量锁定顺序。
-- **traj/interface**：`TrajectoryGenerator` / `EngineAdapter` Protocol 与引擎注册表；xarm7 适配器为当前唯一实现。
-- **tactile/interface**：`TactileSensorModel` Protocol 与观测契约草案（taxel 阵列、T_world_sensor、fixed|body 挂载）；tacsim 等后端为计划项。触觉仿真输出不得声称真实接触验证。
+
+## 触觉：Photon 接入（2026-09-15）
+
+- 后端：git 子仓库 `external/Data-TacSim`（tacsim 库，**无 LICENSE，内部代码**）+ 厂商专有包 xense-sim4.5（部署在子仓库 `third_party/` 忽略区，不进 git；部署记录见 PROVENANCE.md）。
+- 运行要求：Python 3.10（厂商 .so 仅 cp310）、CUDA（`NewtonTactileSensor` 强制）、cffi + pyudev（已装入 Data-MechanicSim/.venv）、OpenGL 上下文——headless 主机用 `xvfb-run -a`。
+- 适配进程内把 `external/Data-TacSim` 插到 `sys.path[0]`，保证使用本仓库钉住的 tacsim 副本（主 venv 另有 tacsim 解析到其他工作树）。
+- 本轮只接通**离线 render_tensor 通路**（合成高斯压痕 → depth/rgb/marker_flow）；Newton 场景内接入（add_to_builder/drive/read_frame）留待下一步。仿真触觉输出不得声称真实接触验证。
+- `photon-render` 与 xarm7 物理作业同级，走显式调用，不进 cases/runner 白名单。
+
+## 轨迹：自有规划器（2026-09-15）
+
+- `traj/planner.py`：waypoint 校验、quintic+Slerp 时间参数化、`JointTrajectory`/`Infeasible`、`validate_limits`——纯 numpy/scipy，设计参考 newton_gen `motion/planning/interface.py`，**不 import newton_gen.motion.\***，后续可自行修改。
+- `traj/adapters/xarm7/plan_trajectory.py`：task JSON → 逐帧 TCP 目标 → Newton IK → FK 门禁（≤1mm/0.1°）→ episode NPZ + 报告；拒绝时退出码 2 且不产轨迹。本轮不做碰撞检查。
 
 ## 迁移说明（v0.4.0 → v0.5.0）
 
 - 模块物理迁移：旧扁平模块移入四个子包；`real2sim.bridge` → `real2sim.traj.bridge`，`real2sim.scans` → `real2sim.scene.scans`，以此类推。
 - `tools/adopt_wrist_tcp_calibration.py` 与 `tools/import_controller_snapshot.py` 的数学核心分别抽至 `align/wrist.py` 与 `align/base.py`，工具脚本保留原入口行为。
 - xarm7 适配器脚本零逻辑改动，仅路径为 `traj/adapters/xarm7/`。
-- 历史 validation/ 证据中的旧路径与旧命令记录不再回填修改。

@@ -9,20 +9,41 @@
 | 当前模板 | `real2sim/WristCameraAlignmentV1/runtime/` |
 | 当前场景入口 | `real2sim/current_scene.json` |
 | 最新腕部相机估计及证据 | `real2sim/WristCameraAlignmentV1/calibration.json` |
-| Newton 工程与机器人资产 | `Data-MechanicSim/`，由 `site.local.json` 显式声明 |
+| Newton 工程与机器人资产 | `Data-MechanicSim/`，由 `R2S_NEWTON_PROJECT` 显式声明 |
 | 已测量长条抓取案例 | `real2sim/MeasuredBarGraspV1/` |
 | 真机回放录像/日志 | `real2sim/MeasuredBarGraspV1/RealReplayComparisonV1/raw/` |
 | 以前的标定、扫描处理资料 | `real2sim/SourceData/` |
 | 原始手机资料和用户资产 | `real2sim/source_inputs/supplied-originals/` |
 | 本地完整迁移快照 | `real2sim/local_imports/20260914/snapshot/` |
 
-这些案例数据不放进 Git。克隆仓库不会凭空获得扫描、视频、机器人网格或专用 Newton 工程。新研究人员在同一服务器可复用 `site.local.json` 指向现有数据；跨机器搬迁须同时复制数据与依赖源码，并修改路径。
+这些案例数据不放进 Git。克隆仓库不会凭空获得扫描、视频、机器人网格或专用 Newton 工程。新研究人员在同一服务器可复用同一组 `R2S_*` 环境变量指向现有数据；跨机器搬迁须同时复制数据与依赖源码，并修改这些变量。
+
+## 运行时路径
+
+七个路径全部来自环境变量，没有配置文件。缺任何一个，命令会在创建输出目录之前报出变量名，不会留下半成品 run。zju 当前的值见 `examples/site.zju.env`。
+
+| 变量 | 含义 |
+|---|---|
+| `R2S_MAIN_PYTHON` | 主环境解释器（numpy、scipy、newton、warp、mujoco、cv2） |
+| `R2S_CYCLES_PYTHON` | 带 bpy 的渲染环境解释器 |
+| `R2S_FFMPEG` | ffmpeg 可执行文件 |
+| `R2S_NEWTON_PROJECT` | Newton 工程与机器人资产根目录 |
+| `R2S_MEASURED_CASE` | 已测量长条抓取案例 |
+| `R2S_REFERENCE_TEMPLATE` | 当前参考场景 runtime 目录；`--template` 未指定时的默认值 |
+| `R2S_RUNS_ROOT` | 新输出目录的默认根 |
+
+`./r2s-server site` 打印当前解析到的七个值。载入方式（建议放进 shell 配置，不必每次手动 source）：
+
+```bash
+set -a; . examples/site.zju.env; set +a
+```
 
 ## 研究人员第一次运行
 
 ```bash
 cd /home/wangshuxun/VLA/data_sim/R2S2R
 ./r2s-server --help
+./r2s-server site
 ./r2s-server doctor
 ./r2s-server smoke --samples 4
 ./r2s-server inspect
@@ -30,7 +51,7 @@ cd /home/wangshuxun/VLA/data_sim/R2S2R
 
 `doctor` 检查数值/仿真环境、bpy 环境、ffmpeg 与案例路径。`smoke` 使用 CPU 跑最小规则场景；不需要 GPU 或真实相机。`inspect` 打开服务器模板并输出 `scene_inventory.json`，列出 Object、Collection、父子关系、米制变换、灯光名称、材质和纹理是否打包。
 
-分配自己的工作目录时，可 `git clone /home/wangshuxun/VLA/data_sim/R2S2R YOUR_REPO`，复制原仓库 `site.local.json` 并把 `runs_root` 改成自己的输出目录。不要多人直接覆盖同一个实验输出。
+分配自己的工作目录时，可 `git clone /home/wangshuxun/VLA/data_sim/R2S2R YOUR_REPO`，把 `examples/site.zju.env` 复制成自己的 `site.local.env` 并把 `R2S_RUNS_ROOT` 改成自己的输出目录。不要多人直接覆盖同一个实验输出。
 
 ## 用文件修改现有场景
 
@@ -136,5 +157,5 @@ $PY -m real2sim.cli case-status /absolute/path/MyScene
 - `bpy` 导入失败：检查 `cycles_python`，不要装进 Newton 的3.10环境。
 - Newton/API不兼容：核对 `environment/newton-source-snapshot.json`；不能靠重新安装任意 PyPI Newton 修复。
 - 相机画面反转/裁切：核对 profile 与 pixel_ops，特别是腕部 raw 640×480；不要只改变分辨率字段。
-- 找不到资产：克隆 Git 不含案例数据，检查 `site.local.json`、URDF绝对资产路径、案例 inputs。
+- 找不到资产：克隆 Git 不含案例数据，检查 `R2S_*` 环境变量（`./r2s-server site`）、URDF绝对资产路径、案例 inputs。
 - 需要大幅修改机器人/场景位置：同步视觉与物理配置，再验证坐标链，不能让相机补偿几何错误。

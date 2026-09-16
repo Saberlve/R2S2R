@@ -1,9 +1,0 @@
-{
-  "fit_improved": true,
-  "holdout_baseline": 0.07919711956137179,
-  "holdout_final": 0.0026235609584431396,
-  "holdout_not_degraded": true,
-  "selected_using": "fit split only",
-  "full_cycles_render_each_candidate": true,
-  "automatic_adoption": false
-}

@@ -1,6 +1,6 @@
 # 大文件资源与渲染产物
 
-GitHub只管理可复用代码、配置、文档、小型机器可读验证记录。没有录制视频、扫描网格或渲染图片/视频；仓库中的小型`door_erase_mask.png`是扫描清理所需的人工标注mask，不是渲染结果。
+GitHub只管理可复用代码、配置和文档。没有录制视频、扫描网格或渲染图片/视频；仓库中的小型`door_erase_mask.png`是扫描清理所需的人工标注mask，不是渲染结果。
 
 统一资源根目录：
 
@@ -19,7 +19,7 @@ GitHub只管理可复用代码、配置、文档、小型机器可读验证记�
 | `repository_data/`、`repository_runs/` | 原仓库Git外的输入资料和运行产物 |
 | `resource_manifest.json` | 来源、目标相对路径、大小、SHA-256 |
 
-`examples/site.zju.json`直接指向上述目录，默认新运行结果也写入NAS，不再写入代码仓库。实际机器配置复制为被Git忽略的`site.local.json`。
+`examples/site.zju.env`用`R2S_*`环境变量直接指向上述目录，默认新运行结果也写入NAS，不再写入代码仓库。实际机器配置复制为被Git忽略的`site.local.env`再改。环境变量不会随Git传播，换机器必须自己设。
 
 Newton工程和已安装Python环境仍是独立软件依赖，见DEPENDENCIES.md。数据和渲染结果不可用Git LFS绕过此资源分离约定。
 

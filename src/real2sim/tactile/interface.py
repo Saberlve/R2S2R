@@ -1,8 +1,9 @@
-"""触觉接入接口（预留；tacsim 等开源后端为计划项）。
+"""Tactile integration interfaces.
 
-本轮只定义契约草案与传感器模型接口，不含任何触觉仿真实现。
-诚实性规则（对齐 docs/LESSONS.md）：触觉输出是仿真观测量，
-禁止据此声称真实接触验证成功。
+This module holds the contract and the sensor model interface; the simulation itself lives
+next door in photon.py and photon_worker.py.
+Honesty rule: tactile output is a simulated observation, and it must never be used to claim
+that real contact has been validated.
 """
 from __future__ import annotations
 
@@ -10,30 +11,36 @@ from typing import Protocol
 
 CONTRACT_DRAFT = {
     "schema_version": "1.0-draft",
-    "status": "reserved_not_implemented",
+    "status": "photon_integrated_offline_only",
     "sensor": {
-        "taxel_grid": "触觉阵列维度 [rows, cols]，每 taxel 输出法向/切向力（N）",
-        "frame": "T_world_sensor 为刚体 4x4（T_A_B 约定，米）；复用 contracts.rigid 校验",
-        "mount": "fixed | body；body 挂载语义对齐相机契约的腕部挂载（需逐帧位姿）",
-        "output": "逐帧 taxel 力 + 合力和合力矩；单位 N / N·m，时间秒",
+        "photon": {
+            "model": "Xense G1-WS optical tactile sensor (marker-based, 20x11 marker grid)",
+            "backend": "git submodule external/Data-TacSim (tacsim) + vendor package xense-sim4.5 (third_party/, not tracked by git)",
+            "integrated_path": "offline render_tensor: synthetic indentation -> depth_m (100x64) / rgb (700x400x3) / marker_flow",
+            "not_yet": "in-scene Newton integration (add_to_builder/drive/read_frame) is still to come",
+        },
+        "taxel_grid": "tactile array dimensions [rows, cols]; each taxel reports normal and shear force (N)",
+        "frame": "T_world_sensor is a rigid 4x4 (T_A_B convention, metres); checked with contracts.rigid",
+        "mount": "fixed | body; body mounting follows the wrist mounting semantics of the camera contract (needs a per-frame pose)",
+        "output": "per-frame taxel forces plus the total force and total torque; units N / N*m, time in seconds",
     },
-    "backends_planned": ["tacsim", "other open-source tactile simulators"],
+    "backends_planned": ["other tacsim backends (gsmini/etac)", "other open-source tactile simulators"],
     "notes": [
-        "触觉仿真输出不是真实接触验证；报告中必须保留仿真来源与不确定度。",
-        "接入时不得修改已锁定的相机/基座标定；摩擦等接触参数遵循 PIPELINE.md 锁定顺序。",
+        "Simulated tactile output is not real-contact validation; reports must keep the simulation source and its uncertainty.",
+        "Integration must not change a locked camera or base calibration; friction and other contact parameters follow the locking order in PIPELINE.md.",
     ],
 }
 
 
 class TactileSensorModel(Protocol):
-    """触觉传感器模型接口（预留，未实现）。"""
+    """Tactile sensor model interface (reserved, not implemented)."""
 
     def attach(self, body: str, T_body_sensor: list) -> None:
-        """把传感器刚体挂载到指定刚体；T_body_sensor 必须过 contracts.rigid。"""
+        """Attach the sensor rigid body to a given body; T_body_sensor must pass contracts.rigid."""
         ...
 
     def sense(self, state: dict) -> dict:
-        """对一帧仿真状态采样，返回符合 CONTRACT_DRAFT.sensor.output 的观测。"""
+        """Sample one frame of simulation state and return an observation matching CONTRACT_DRAFT.sensor.output."""
         ...
 
 

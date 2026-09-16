@@ -1,14 +1,17 @@
-"""视频 + Blender + Agent 初始场景建模接口（契约草案，未实现）。
+"""Video + Blender + Agent initial scene modeling interface (draft contract, not implemented).
 
-定位：从房间环拍视频出发，由 Agent 驱动既有 Blender worker（scene build/audit）
-搭建几何与比例正确的初始 scene.json 草稿，随后由扫描注册（scene.scans）与
-测距优化（scene.spatial）细化。
+Purpose: start from a room walkthrough video and have an Agent drive the existing Blender
+worker (scene build/audit) to build a first scene.json draft whose geometry and scale are
+correct, then refine it with scan registration (scene.scans) and distance optimization
+(scene.spatial).
 
-硬性规则：
-- 产物一律是**草稿**：所有相机/实体位姿 quality 只能标 "estimated"，
-  禁止标 "image_fitted" 或 "calibrated"（见 docs/CONTRACTS.md 的 quality 语义）。
-- 禁止覆盖既有 scene.json 或冻结基线；每次建模写全新输出目录。
-- 视频原始素材只读，纳入 inventory/SHA256 留档。
+Hard rules:
+- The output is always a **draft**: every camera and entity pose quality may only be
+  "estimated", never "image_fitted" or "calibrated" (see the quality semantics in
+  docs/CONTRACTS.md).
+- Never overwrite an existing scene.json or a frozen baseline; every modeling run writes a
+  fresh output directory.
+- Video source material is read-only and is recorded in the inventory with its SHA256.
 """
 from __future__ import annotations
 
@@ -19,24 +22,25 @@ VIDEO_INTAKE_CONTRACT = {
     "status": "reserved_not_implemented",
     "videos": [
         {
-            "path": "原始环拍视频路径（只读）",
-            "camera_profile_id": "可选；关联 CONTRACTS.md 相机 profile 哈希",
-            "keyframes": "可选；显式抽帧时间戳列表（秒），禁止静默抽帧",
+            "path": "path to the original walkthrough video (read-only)",
+            "camera_profile_id": "optional; links to a camera profile hash in CONTRACTS.md",
+            "keyframes": "optional; explicit list of frame timestamps in seconds, never a silent subsample",
         }
     ],
     "world": {"length_unit": "m", "up_axis": "Z", "handedness": "right"},
-    "notes": "输出为草稿 scene.json（quality=estimated），供 scan-register 与 spatial-fit 继续收敛。",
+    "notes": "The output is a draft scene.json (quality=estimated) for scan-register and spatial-fit to refine further.",
 }
 
 
 class InitialSceneModeler(Protocol):
-    """初始场景建模器接口（预留，未实现）。"""
+    """Initial scene modeler interface (reserved, not implemented)."""
 
     def build(self, video_intake: dict, out_dir: str) -> dict:
-        """消费视频素材契约，产出草稿 scene.json 与建模报告。
+        """Consume the video intake contract and produce a draft scene.json plus a modeling report.
 
-        实现体预期为 Agent + `r2s scene build/audit` worker 的组合；
-        返回报告需列出每个实体的依据与不确定度。
+        The implementation is expected to combine an Agent with the `r2s scene build/audit`
+        worker. The returned report must list the evidence and the uncertainty behind every
+        entity.
         """
         ...
 
@@ -47,6 +51,7 @@ def describe() -> dict:
 
 def build_draft(video_intake: dict, out_dir: str) -> dict:
     raise NotImplementedError(
-        "视频初始建模为预留接口，本轮仅提供契约草案 describe()；"
-        "当前请按 docs/AUTOMATION.md 由 Agent 手工起草 scene.json"
+        "Initial video modeling is a reserved interface; this round only provides the draft "
+        "contract describe(). For now, have an Agent draft scene.json by hand following "
+        "docs/AUTOMATION.md"
     )
