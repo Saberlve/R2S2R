@@ -26,6 +26,28 @@ def allowlisted(argv):
  if argv and argv[0] in TOP_COMMANDS:return True
  return len(argv)>1 and argv[0] in GROUP_COMMANDS and argv[1] in GROUP_COMMANDS[argv[0]]
 
+def submodule_root():
+ """The Data-MechanicSim submodule a `--recursive` clone carries."""
+ return pathlib.Path(__file__).resolve().parents[2]/'external'/'Data-MechanicSim'
+
+def default_newton_project():
+ """R2S_NEWTON_PROJECT, else the external/Data-MechanicSim submodule once it is populated.
+
+ A clone made without `--recursive` leaves an empty directory, which must not be mistaken for a
+ usable checkout -- same rule as tools/server.py.
+ """
+ explicit=os.environ.get('R2S_NEWTON_PROJECT')
+ if explicit:return explicit
+ candidate=submodule_root()
+ return str(candidate) if (candidate/'newton_gen').is_dir() else None
+
+def default_cycles_python():
+ """R2S_CYCLES_PYTHON, else the render_cycles environment `uv sync` builds in the submodule."""
+ explicit=os.environ.get('R2S_CYCLES_PYTHON')
+ if explicit:return explicit
+ candidate=submodule_root()/'render_cycles'/'.venv'/'bin/python'
+ return str(candidate) if candidate.is_file() else None
+
 def build_parser():
  p=argparse.ArgumentParser(prog='r2s');sub=p.add_subparsers(dest='group',required=True)
  s=sub.add_parser('scene',help='Scene visual reconstruction');sp=s.add_subparsers(dest='verb',required=True)
@@ -46,12 +68,12 @@ def build_parser():
  v=ap.add_parser('base-check',help='Validate the scene_config base alignment fields');v.add_argument('config')
  t=sub.add_parser('traj',help='Trajectory generation');tp=t.add_subparsers(dest='verb',required=True)
  v=tp.add_parser('convert');v.add_argument('--input',required=True);v.add_argument('--calibration',required=True);v.add_argument('--out',required=True)
- v=tp.add_parser('xarm7');v.add_argument('job',choices=['validate_kinematics','simulate_replay','generate_grasp','gripper_mapping','import_eef','trajectory_adapter','plan_trajectory']);v.add_argument('--case',required=True);v.add_argument('--newton-project',required=True);v.add_argument('job_args',nargs=argparse.REMAINDER)
+ v=tp.add_parser('xarm7');v.add_argument('job',choices=['validate_kinematics','simulate_replay','generate_grasp','gripper_mapping','import_eef','trajectory_adapter','plan_trajectory']);v.add_argument('--case',required=True);v.add_argument('--newton-project',help='Data-MechanicSim checkout; defaults to R2S_NEWTON_PROJECT, else the external/Data-MechanicSim submodule');v.add_argument('job_args',nargs=argparse.REMAINDER)
  c=sub.add_parser('tactile',help='Tactile integration');cp=c.add_subparsers(dest='verb',required=True)
  cp.add_parser('describe',help='Print the tactile contract')
  v=cp.add_parser('doctor',help='Check the Photon runtime item by item');v.add_argument('--python',default='python3',help='Target interpreter with tacsim dependencies')
  v=cp.add_parser('photon-render',help='Photon offline tactile render (synthetic stimulus)');v.add_argument('config');v.add_argument('--out',required=True);v.add_argument('--python',required=True,help='Existing Python 3.10 with tacsim deps; do not install/replace Newton')
- v=sub.add_parser('case-init');v.add_argument('case');v.add_argument('--cycles-python',required=True)
+ v=sub.add_parser('case-init');v.add_argument('case');v.add_argument('--cycles-python',help='Existing Python with bpy; defaults to R2S_CYCLES_PYTHON, else the submodule render_cycles environment')
  v=sub.add_parser('case-run');v.add_argument('case');v.add_argument('--retry-failed',action='store_true')
  v=sub.add_parser('case-status');v.add_argument('case')
  v=sub.add_parser('case-review');v.add_argument('case');v.add_argument('--stage',required=True);v.add_argument('--token',required=True);v.add_argument('--decision',choices=['approve','reject'],required=True);v.add_argument('--by',required=True);v.add_argument('--note',required=True)
@@ -69,7 +91,10 @@ def main(argv=None):
  a=build_parser().parse_args(rewritten)
  if a.group.startswith('case-') or a.group=='case-init':
   from . import cases
-  if a.group=='case-init':print(cases.init(a.case,a.cycles_python))
+  if a.group=='case-init':
+   cycles=a.cycles_python or default_cycles_python()
+   if not cycles:raise SystemExit('Missing --cycles-python and R2S_CYCLES_PYTHON: run `uv sync` in external/Data-MechanicSim/render_cycles, or pass an existing Python with bpy')
+   print(cases.init(a.case,cycles))
   elif a.group=='case-run':
    result=cases.run(a.case,a.retry_failed);print(json.dumps(result,ensure_ascii=False,indent=2));sys.exit(0 if result['status']=='complete' else 2)
   elif a.group=='case-status':print(json.dumps(load(pathlib.Path(a.case)/'runs/status.json'),ensure_ascii=False,indent=2))
@@ -139,7 +164,9 @@ def main(argv=None):
    save(out/'conversion.json',{'source_manifest_sha256':sha(pathlib.Path(a.input)/'manifest.json'),'calibration_sha256':sha(a.calibration),'episodes':rows,'tcp_frame':'robot_base','position_unit':'m','quaternion':'xyzw','observation_action_separate':True})
    return
   if a.verb=='xarm7':
-   root=pathlib.Path(a.case).resolve();project=pathlib.Path(a.newton_project).resolve();s=load(root/'scene_config.json')
+   project_root=a.newton_project or default_newton_project()
+   if not project_root:raise SystemExit('Missing --newton-project and R2S_NEWTON_PROJECT: pass the Data-MechanicSim checkout, or clone with --recursive so external/Data-MechanicSim is populated')
+   root=pathlib.Path(a.case).resolve();project=pathlib.Path(project_root).resolve();s=load(root/'scene_config.json')
    if s.get('tcp_offset_m')!=[0,0,.172]:raise ValueError('This validated physical adapter supports xArm7 G2 TCP172 only; implement/test a new robot adapter for other TCPs')
    env=os.environ.copy();env['R2S_CASE_ROOT']=str(root);env['R2S_NEWTON_PROJECT']=str(project)
    args=a.job_args[1:] if a.job_args[:1]==['--'] else a.job_args

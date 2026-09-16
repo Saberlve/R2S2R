@@ -22,3 +22,51 @@ def test_existing_output_is_not_overwritten(tmp_path):
 def test_missing_declared_calibration_is_not_silently_accepted(tmp_path):
  source=fixture_template(tmp_path);(source.parent/'calibration.json').unlink()
  with pytest.raises(FileNotFoundError):server.copy_template(source,tmp_path/'export')
+
+def scratch_clone(tmp_path,monkeypatch,populated=True):
+ """Repoint every repository default at a scratch tree, so a test describes a fresh clone."""
+ sub=tmp_path/'Data-MechanicSim'
+ (sub/'newton_gen').mkdir(parents=True) if populated else sub.mkdir()
+ monkeypatch.setattr(server,'SUBMODULE_NEWTON_PROJECT',sub);monkeypatch.setattr(server,'ROOT',tmp_path)
+ for name in ['DEFAULT_MAIN_PYTHON','DEFAULT_CYCLES_PYTHON']:
+  exe=tmp_path/name.lower()/'bin/python';exe.parent.mkdir(parents=True);exe.write_text('')
+  monkeypatch.setattr(server,name,exe)
+ return sub
+
+def test_a_prepared_clone_needs_no_environment_variables(tmp_path,monkeypatch):
+ sub=scratch_clone(tmp_path,monkeypatch);site=server.site_from_env({})
+ assert site['newton_project']==str(sub) and site['runs_root']==str(tmp_path/'runs')
+ server.require_site(site,'smoke')  # the claim: clone + `uv sync` twice and the smoke path runs
+
+def test_an_explicit_variable_still_wins(tmp_path,monkeypatch):
+ scratch_clone(tmp_path,monkeypatch)
+ site=server.site_from_env({'R2S_MAIN_PYTHON':'/custom/python','R2S_NEWTON_PROJECT':'/elsewhere'})
+ assert site['main_python']=='/custom/python' and site['newton_project']=='/elsewhere'
+
+def test_an_unbuilt_environment_is_reported_as_missing(tmp_path,monkeypatch):
+ scratch_clone(tmp_path,monkeypatch);monkeypatch.setattr(server,'DEFAULT_MAIN_PYTHON',tmp_path/'absent/python')
+ site=server.site_from_env({});assert site['main_python'] is None
+ with pytest.raises(SystemExit) as exc:server.require_site(site,'smoke')
+ assert 'R2S_MAIN_PYTHON' in str(exc.value) and 'uv sync' in str(exc.value)
+
+def test_an_uninitialized_submodule_is_not_taken_as_a_newton_project(tmp_path,monkeypatch):
+ sub=scratch_clone(tmp_path,monkeypatch,populated=False);site=server.site_from_env({})
+ assert server.newton_project_is_populated(sub) is False and site['newton_project'] is None
+ with pytest.raises(SystemExit) as exc:server.require_site(site,'simulate')
+ # The empty directory is the non-recursive clone, so the error has to name that remedy.
+ assert 'submodule update --init --recursive' in str(exc.value)
+
+def test_smoke_does_not_require_the_lab_case_paths(tmp_path,monkeypatch):
+ scratch_clone(tmp_path,monkeypatch);site=server.site_from_env({})
+ assert site['measured_case'] is None and site['reference_template'] is None and site['ffmpeg'] in (None,server.shutil.which('ffmpeg'))
+ server.require_site(site,'smoke')
+ # The commands that do read them still have to refuse rather than run against nothing.
+ with pytest.raises(SystemExit):server.require_site(site,'render')
+ with pytest.raises(SystemExit):server.require_site(site,'simulate')
+
+def test_the_example_env_file_only_sets_paths_that_have_no_default():
+ # Copying the template verbatim is what the README tells people to do, and an explicit value
+ # always wins -- so an uncommented placeholder here would silently clobber a working default.
+ text=(pathlib.Path(__file__).resolve().parents[1]/'examples/site.example.env').read_text()
+ exported={line.split('=')[0].replace('export','').strip() for line in text.splitlines() if line.startswith('export')}
+ assert exported=={'R2S_MEASURED_CASE','R2S_REFERENCE_TEMPLATE'}

@@ -1,32 +1,33 @@
 # 依赖与部署
 
-本仓库不自包含：它只有流程代码、schema 和配置样例。本文说明要跑起来还需要哪些仓库、环境与外部资源，以及怎么自检。
+本仓库自带流程代码、schema 和配置样例，并通过子模块携带 Data-MechanicSim。本文说明要跑起来还需要哪些环境与外部资源，以及怎么自检。
 
 ## 需要哪些仓库
 
 | 仓库 | 作用 | 获取方式 |
 |---|---|---|
-| **R2S2R**（本仓库） | 流程代码、schema、配置样例 | `git clone https://github.com/Saberlve/R2S2R.git`。**不需要 `--recursive`**：本仓库没有子模块 |
-| **Data-MechanicSim** | Newton 工程、机器人资产、`newton_gen` 适配代码，以及触觉仿真库 **tacsim** | 内网 Git：`https://git.weiyantech.cn/Worlddynamics/Data-MechanicSim.git`（需内网访问或 VPN 与账号，见下） |
+| **R2S2R**（本仓库） | 流程代码、schema、配置样例 | `git clone --recursive https://github.com/Saberlve/R2S2R.git`。**必须带 `--recursive`**：它带出子模块 Data-MechanicSim |
+| **Data-MechanicSim** | Newton 工程、机器人资产、`newton_gen` 适配代码，以及触觉仿真库 **tacsim** | 本仓库的子模块，位于 `external/Data-MechanicSim`。上游为内网 Git：`https://git.weiyantech.cn/Worlddynamics/Data-MechanicSim.git`（需内网访问或 VPN 与账号，见下） |
 | **tacsim**（Data-TacSim） | Photon 触觉仿真后端 | 已由 Data-MechanicSim 作为 `third_party/tacsim` 提供；**本仓库不再单独持有** |
 
 `tacsim` 是**无 LICENSE 的内部代码**，不得对外再分发；其厂商运行时包 xense-sim4.5 同样专有。来源与许可记录见 [PROVENANCE.md](PROVENANCE.md)。
 
-### 拿到 Data-MechanicSim
+### Data-MechanicSim 子模块
 
-它自带两个子模块（`third_party/newton`、`third_party/tacsim`），所以**要带 `--recursive`**：
+它是本仓库的子模块，位于 `external/Data-MechanicSim`，`git clone --recursive` 会一并带出。它自己还有 `third_party/newton` 与 `third_party/tacsim` 两层子模块，所以递归是必需的 —— 少一层就只剩空目录。
 
 ```bash
-git clone --recursive https://git.weiyantech.cn/Worlddynamics/Data-MechanicSim.git
-export R2S_NEWTON_PROJECT="$(cd Data-MechanicSim && pwd)"   # 写进你的 site.local.env
+git submodule update --init --recursive   # 克隆时漏了 --recursive 就补这条
 ```
 
-不在内网时这个地址解析不了 —— 换 VPN，或向维护者索取一份可访问的镜像/打包。放哪儿都可以，`R2S_NEWTON_PROJECT` 指向它即可；**不要为了本仓库再复制一份 DMS**，那会让 tacsim 出现第二份。
+子模块初始化好之后 **`R2S_NEWTON_PROJECT` 不必再设**：工具会回退到 `external/Data-MechanicSim`，`./r2s-server site` 显示当前解析到的值。只有在想把工程放到别处时才设它，设了就以你的值为准。
 
-克隆完自查（`--recursive` 已经会带到正确版本）：
+访问不了内网 Git 时子模块取不下来（`https://git.weiyantech.cn/...` 需内网或 VPN）—— 换网络，或向维护者索取一份可访问的镜像/打包，再把 `R2S_NEWTON_PROJECT` 指向那份 checkout。**不要再手工复制一份 DMS**：tacsim 会跟着出现第二份，而它由 `--python` 指定的解释器解析，两份会让"跑的到底是哪份"变得不可知。
+
+克隆完自查：
 
 ```bash
-git -C "$R2S_NEWTON_PROJECT/third_party/tacsim" log --oneline -1   # 应 >= d5ce700
+git -C external/Data-MechanicSim/third_party/tacsim log --oneline -1   # 应 >= d5ce700
 ```
 
 ### tacsim 的版本下限
@@ -56,7 +57,7 @@ assimp-py==1.0.8
 
 Data-MechanicSim 已在它的 `pyproject.toml` 里用 `tactile` 依赖组（并挂进 `default-groups`）固定这些版本。tacsim 自己的 `benchmark` 组**不参与传递依赖**（其 `pyproject.toml` 明确写了 "Consumers of tacsim only get `[project.dependencies]`"），所以必须在消费方重复声明，否则 `uv sync` 会把它们清掉。
 
-`uv sync` 在这个仓库里是安全的：`_editable_impl_tactile_benchmark.pth` 应指向 `Data-MechanicSim/third_party/tacsim`，也就是 `[tool.uv.sources]` 声明的那份，而它现在位于 `d5ce700`（含 bundle）。同步后用 `r2s tactile doctor` 确认解析路径即可。
+`uv sync` 在这个仓库里是安全的：`_editable_impl_tactile_benchmark.pth` 应指向 `external/Data-MechanicSim/third_party/tacsim`，也就是 `[tool.uv.sources]` 声明的那份，而它现在位于 `d5ce700`（含 bundle）。同步后用 `r2s tactile doctor` 确认解析路径即可。
 
 > ⚠️ **不要把 `.venv` 提交进 Git。** 它已在 `.gitignore` 里，但 ignore 对**已跟踪**的文件无效。历史上有过一次教训：一个 worktree 把 `.venv` 作为**绝对路径符号链接**提交了，checkout 到另一个 worktree 后变成指向自身的自环，把真实的虚拟环境目录顶掉。若发现 `.venv` 出现在 `git ls-files` 里，先 `git rm --cached .venv` 再用 `uv sync` 重建。
 
@@ -78,12 +79,21 @@ PYTHONPATH=src xvfb-run -a $PY -m real2sim.cli tactile photon-render \
 
 ## 两个 Python 环境
 
-| 栈 | Python | 用途 |
-|---|---|---|
-| 数值、标定、Newton、接触、触觉 | 3.10 | `real2sim.cli`、`r2s-server` 的多数命令、`photon-render` |
-| Cycles 无界面渲染 | 带 `bpy` 的环境（zju 为 3.11） | `scene build/render`、`tools/server_scene.py` |
+两个环境都在 Data-MechanicSim 子模块内部，各由一份 `uv.lock` 固定，用 `uv sync` 建出即可：
 
-两者都通过 `R2S_*` 环境变量显式传入，没有配置文件。zju 现有值见 `examples/site.zju.env`；换机器照抄 `examples/site.example.env` 改成 Git 外的 `site.local.env`。
+| 栈 | 位置 | Python | 用途 |
+|---|---|---|---|
+| 数值、标定、Newton、接触、触觉 | `external/Data-MechanicSim/.venv/` | 3.10 | `real2sim.cli`、`r2s-server` 的多数命令、`photon-render` |
+| Cycles 无界面渲染 | `external/Data-MechanicSim/render_cycles/.venv/` | 3.11 + `bpy` | `scene build/render`、`tools/server_scene.py` |
+
+```bash
+(cd external/Data-MechanicSim && uv sync)                 # 主环境
+(cd external/Data-MechanicSim/render_cycles && uv sync)   # 渲染环境
+```
+
+`uv` 按各自的 `.python-version` 自行取得所需 Python 版本。主环境里的 Newton 不是从 PyPI 装的：`[tool.uv.sources]` 把 `newton` 指向 `third_party/newton`（editable），tacsim 同理指向 `third_party/tacsim`。渲染环境的 `bpy` 是官方 wheel，Cycles 内核与 CUDA 随包自带，不需要系统安装 Blender。
+
+工具默认就用这两个路径，不必设 `R2S_MAIN_PYTHON` / `R2S_CYCLES_PYTHON`；只有把环境放在别处时才用这两个变量覆盖。zju 现有值见 `examples/site.zju.env`。
 
 `bpy` 后台仍负责读取已验证的 `.blend` 并执行 Cycles —— "服务器流程"指无需桌面 Blender 操作，不是换渲染器。
 

@@ -4,33 +4,33 @@
 
 | 内容 | zju 路径（均位于 `/home/wangshuxun/VLA/data_sim/`） |
 |---|---|
-| 可复用代码、README、配置样例 | `real2sim-pipeline/` |
+| 可复用代码、README、配置样例 | `R2S2R/` |
 | 案例、原始资料和运行结果 | `real2sim/` |
 | 当前模板 | `real2sim/WristCameraAlignmentV1/runtime/` |
 | 当前场景入口 | `real2sim/current_scene.json` |
 | 最新腕部相机估计及证据 | `real2sim/WristCameraAlignmentV1/calibration.json` |
-| Newton 工程与机器人资产 | `Data-MechanicSim/`，由 `R2S_NEWTON_PROJECT` 显式声明 |
+| Newton 工程与机器人资产 | `R2S2R/external/Data-MechanicSim/`（子模块），`R2S_NEWTON_PROJECT` 可覆盖 |
 | 已测量长条抓取案例 | `real2sim/MeasuredBarGraspV1/` |
 | 真机回放录像/日志 | `real2sim/MeasuredBarGraspV1/RealReplayComparisonV1/raw/` |
 | 以前的标定、扫描处理资料 | `real2sim/SourceData/` |
 | 原始手机资料和用户资产 | `real2sim/source_inputs/supplied-originals/` |
 | 本地完整迁移快照 | `real2sim/local_imports/20260914/snapshot/` |
 
-这些案例数据不放进 Git。克隆仓库不会凭空获得扫描、视频、机器人网格或专用 Newton 工程。新研究人员在同一服务器可复用同一组 `R2S_*` 环境变量指向现有数据；跨机器搬迁须同时复制数据与依赖源码，并修改这些变量。
+这些案例数据不放进 Git，克隆仓库不会凭空获得扫描、视频和渲染结果（机器人网格与 Newton 工程随 `--recursive` 子模块带来，属于例外）。新研究人员在同一服务器可复用同一组 `R2S_*` 环境变量指向现有数据；跨机器搬迁须同时复制数据与依赖源码，并修改这些变量。
 
 ## 运行时路径
 
-七个路径全部来自环境变量，没有配置文件。缺任何一个，命令会在创建输出目录之前报出变量名，不会留下半成品 run。zju 当前的值见 `examples/site.zju.env`。
+七个路径可用 `R2S_*` 环境变量覆盖，没有配置文件。能推导的都有仓库内默认值（见下表）；命令只在真正用得上某个路径时才要求它，且在创建输出目录之前报错，不会留下半成品 run。zju 当前的值见 `examples/site.zju.env`。
 
-| 变量 | 含义 |
-|---|---|
-| `R2S_MAIN_PYTHON` | 主环境解释器（numpy、scipy、newton、warp、mujoco、cv2） |
-| `R2S_CYCLES_PYTHON` | 带 bpy 的渲染环境解释器 |
-| `R2S_FFMPEG` | ffmpeg 可执行文件 |
-| `R2S_NEWTON_PROJECT` | Newton 工程与机器人资产根目录 |
-| `R2S_MEASURED_CASE` | 已测量长条抓取案例 |
-| `R2S_REFERENCE_TEMPLATE` | 当前参考场景 runtime 目录；`--template` 未指定时的默认值 |
-| `R2S_RUNS_ROOT` | 新输出目录的默认根 |
+| 变量 | 含义 | 默认值 |
+|---|---|---|
+| `R2S_MAIN_PYTHON` | 主环境解释器（numpy、scipy、newton、warp、mujoco、cv2） | 子模块 `.venv/` |
+| `R2S_CYCLES_PYTHON` | 带 bpy 的渲染环境解释器 | 子模块 `render_cycles/.venv/` |
+| `R2S_FFMPEG` | ffmpeg 可执行文件 | PATH 上的 `ffmpeg` |
+| `R2S_NEWTON_PROJECT` | Newton 工程与机器人资产根目录 | `external/Data-MechanicSim` |
+| `R2S_MEASURED_CASE` | 已测量长条抓取案例 | 无 |
+| `R2S_REFERENCE_TEMPLATE` | 当前参考场景 runtime 目录；`--template` 未指定时的默认值 | 无 |
+| `R2S_RUNS_ROOT` | 新输出目录的默认根 | 仓库内 `runs/` |
 
 `./r2s-server site` 打印当前解析到的七个值。载入方式（建议放进 shell 配置，不必每次手动 source）：
 
@@ -53,7 +53,7 @@ cd /home/wangshuxun/VLA/data_sim/R2S2R
 
 触觉另有独立自检：`r2s tactile doctor --python <解释器>` 逐项检查 tacsim 的解析与运行条件，关键项缺失退出 2，详见 [DEPENDENCIES.md](DEPENDENCIES.md)。
 
-分配自己的工作目录时，可 `git clone /home/wangshuxun/VLA/data_sim/R2S2R YOUR_REPO`，把 `examples/site.zju.env` 复制成自己的 `site.local.env` 并把 `R2S_RUNS_ROOT` 改成自己的输出目录。不要多人直接覆盖同一个实验输出。
+分配自己的工作目录时，可 `git clone --recursive /home/wangshuxun/VLA/data_sim/R2S2R YOUR_REPO`（`--recursive` 不能省，否则 `external/Data-MechanicSim` 是空目录），把 `examples/site.zju.env` 复制成自己的 `site.local.env` 并把 `R2S_RUNS_ROOT` 改成自己的输出目录。不要多人直接覆盖同一个实验输出。
 
 ## 用文件修改现有场景
 
