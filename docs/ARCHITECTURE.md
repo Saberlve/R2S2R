@@ -10,7 +10,8 @@ src/real2sim/
 ├── cli.py                  # r2s 分组子命令 + 旧扁平动词别名层
 ├── cases.py / runner.py    # 工作流引擎 / 计划 DAG 执行器（命令白名单来自 cli）
 ├── artifacts.py / mcp.py   # 留档与冻结 / 可选 Blender MCP 传输
-├── schemas/                # scene.json JSON-Schema
+├── assets.py               # 仓库级物体资产库 assets/ 的加载与校验（asset list/show/check）
+├── schemas/                # scene.json 与 asset.json 的 JSON-Schema
 ├── workers/                # 独立 bpy worker（Cycles 渲染、扫描资产打包）
 │
 ├── scene/                  # 领域 1：场景视觉重建
@@ -43,6 +44,8 @@ src/real2sim/
 
 tacsim 不在本仓库的目录树里 —— 它由 `--python` 指定的解释器自行解析，见下。
 
+`assets/` 是仓库根的物体资产库，不随 `src/` 打包。它不是第五个流水线领域，而是四个领域共享的输入：一个物体只描述一次，任务按 id 引用。本轮只有库、校验与浏览，`scene.json` 与 task.json 的引用尚未接通，见 [assets/README.md](../assets/README.md)。
+
 ## CLI 对照表
 
 新命令为分组形式 `r2s <领域> <动词>`。旧扁平写法仍可用（stderr 打印弃用警告，未来版本移除）。
@@ -62,6 +65,7 @@ tacsim 不在本仓库的目录树里 —— 它由 `--python` 指定的解释�
 | —（新） | `r2s tactile describe`（打印触觉契约） |
 | —（新） | `r2s tactile doctor [--python]`（Photon 运行时逐项检查，关键项缺失退出 2） |
 | —（新） | `r2s tactile photon-render <config> --out --python`（离线触觉渲染，合成刺激） |
+| —（新） | `r2s asset list / show / check`（仓库级物体资产库；只读，尚未被任何消费方引用） |
 | 顶层不变 | `case-init / case-run / case-status / case-review / run / inventory / check-inventory / freeze` |
 
 `cases.py` 与 `runner.py` 的命令白名单统一来自 `cli.allowlisted()`；旧写法在白名单检查前经 `cli.normalize_command()` 归一化，NAS 上既有 workflow.json 与 pipeline 计划无需修改。

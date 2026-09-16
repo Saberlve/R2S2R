@@ -39,7 +39,7 @@ cd R2S2R
 
 只有最后两个要填。把 [`examples/site.example.env`](examples/site.example.env) 复制成仓库根目录的 `site.local.env`（文件名被 `.gitignore` 忽略）写好再 `set -a; . site.local.env; set +a`；`examples/site.zju.env` 是一份填好的实例可照抄。显式设置的值永远优先于默认值，`./r2s-server site` 显示每个路径解析成了什么，`null` 表示既没设也没默认。
 
-数据不进 Git：渲染结果、录像、扫描、模型、数据集放在仓库外，需要有挂载和读权限。仓库自带的最小场景 `examples/minimal/` 不需要这些数据。
+数据不进 Git：渲染结果、录像、扫描、模型、数据集放在仓库外，需要有挂载和读权限。唯一例外是仓库级物体资产库 [`assets/`](assets/README.md) —— 只放跨任务复用的小物体，单文件 ≤ 2MB，格式受限，见 [docs/RESOURCES.md](docs/RESOURCES.md)。仓库自带的最小场景 `examples/minimal/` 不需要这些数据。
 
 ## 命令参考
 
@@ -131,6 +131,18 @@ xvfb-run -a "$PY" -m real2sim.cli tactile photon-render \
 
 `doctor` 逐项检查 tacsim 解析、厂商 bundle、Python 3.10、cffi/pyudev、CUDA，并报出**实际解析到的** tacsim 路径。触觉需要 CUDA 和 OpenGL 上下文（无显示器用 `xvfb-run -a`）。tacsim 由 `--python` 指定的解释器自行解析，本仓库不持有副本、也不把它写进依赖：**不要 `pip install tacsim`**，它没有 PyPI 包、没有 LICENSE，声明它会让外网主机上的 `pip install -e .` 直接失败。当前只接入离线合成刺激的渲染通路，Newton 场景内触觉尚未实现。
 
+### 物体资产库 `r2s asset`
+
+跨任务的物体放在仓库级资产库 `assets/<object_id>/`，一个物体只描述一次。**本轮只有库、校验与浏览，`scene.json` 与 task.json 还不能按 id 引用它**，字段集也等真实物体示例后定稿：
+
+```bash
+"$PY" -m real2sim.cli asset check          # 逐个校验，失败退出 2
+"$PY" -m real2sim.cli asset list
+"$PY" -m real2sim.cli asset show TestBox
+```
+
+规则见 [`assets/README.md`](assets/README.md)：目录名即 id，`asset.json` 记几何、物理与来源，缺的段落表示"尚未确定"，消费者必须拒绝而不是补默认值。
+
 ### 工作流与案例 `r2s` 顶层
 
 | 命令 | 作用 |
@@ -157,7 +169,7 @@ xvfb-run -a "$PY" -m real2sim.cli tactile photon-render \
 | `capture_realsense.py` | 相机采集；默认 dry-run，**只有显式 `--capture` 才拍**；从不接触机器人 |
 | `environment_snapshot.py --check F.json` | 记录/核对机器人适配器所用的外部源码树 |
 | `import_local_snapshot.py` | 校验快照并补齐缺失文件，服务器冲突一律保留 |
-| `check_git_payload.py` | 提交前检查：拒绝资源二进制与大于 5MB 的 blob |
+| `check_git_payload.py` | 提交前检查：拒绝资源二进制与大于 5MB 的 blob；`assets/` 内的物体例外（≤2MB、限格式、纹理限 `textures/`） |
 
 从 Newton 状态出视频：
 
@@ -214,7 +226,7 @@ MyNewScene/
   workflow.json        # Agent 配置阶段、依赖、参数及输入输出
   AGENT_HANDOFF.md     # Agent 工作约定
   raw/                 # 原始资料，保持不变
-  assets/              # 分离后的资产、纹理
+  assets/              # 本场景分离后的资产、纹理（与仓库级资产库 assets/ 不是一回事，见 assets/README.md）
   config/              # scene.json、拟合配置、对应点、evidence.md
   runs/                # 每阶段独立 attempt、日志、哈希、状态及审核记录
   TODO.md              # 当前下一步

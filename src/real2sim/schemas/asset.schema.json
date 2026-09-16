@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+    },
+    "role": {
+      "enum": [
+        "table",
+        "robot",
+        "task",
+        "misc",
+        "background"
+      ]
+    },
+    "geometry": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "box",
+            "mesh"
+          ]
+        },
+        "size_m": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "box"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "size_m"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "mesh"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "path"
+            ]
+          }
+        }
+      ]
+    },
+    "physics": {
+      "type": "object",
+      "properties": {
+        "mass_kg": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "friction": {
+          "type": "number",
+          "minimum": 0
+        },
+        "inertia_diagonal_kg_m2": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        }
+      },
+      "required": [
+        "mass_kg",
+        "friction"
+      ],
+      "additionalProperties": false
+    },
+    "visual": {
+      "type": "object",
+      "properties": {
+        "color_linear": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "roughness": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+    "collision": {
+      "type": "object",
+      "properties": {
+        "closed_required": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "closed_required"
+      ],
+      "additionalProperties": false
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "confidence": {
+          "enum": [
+            "measured",
+            "estimated",
+            "model"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "confidence",
+        "source"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schema_version",
+    "id",
+    "role",
+    "geometry",
+    "provenance"
+  ],
+  "additionalProperties": false
+}

@@ -3,7 +3,7 @@ Use plain language over jargon, and reference technical details only to the degr
 
 # Repository work rules
 
-- Keep this repository scene-independent. Case data, captures, asset binaries and run caches stay outside Git.
+- Keep this repository scene-independent. Case data, captures, asset binaries and run caches stay outside Git -- the one exception is the committed object asset library under `assets/`, capped at 2MB per file and limited to the formats `tools/check_git_payload.py` permits. Scans, renders and captures never belong there.
 - Never enable/reset/move a real robot from this pipeline. Capture tools remain explicit operator actions.
 - Respect units and T_A_B conventions in docs/CONTRACTS.md; do not silently infer/crop/resize calibration inputs.
 - Use existing Newton and Cycles runtimes. Do not pip-install/replace Newton.

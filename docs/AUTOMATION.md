@@ -24,7 +24,7 @@
 | command | allowlist CLI argv、inputs、可选 templates | 独立 attempt 中的声明 outputs 与日志 |
 | review | requires 依赖产物、instruction | 与依赖指纹绑定的 approve/reject 记录 |
 
-允许命令（分组形式，见 docs/ARCHITECTURE.md）：`scene validate/build/audit/render/scan-inspect/scan-register/scan-bake/fit-appearance/score/video`、`align calibrate/fit-camera`、`traj convert`、顶层 `freeze`。旧扁平写法（如 `build`、`calibrate`）在白名单检查前自动归一化为分组形式，既有 workflow.json 无需修改。无 shell 命令和硬件调用。Newton/xarm7 回放和 LeRobot 导入继续使用已有独立接口；当前 case-run 不自动调用会写入 case 的物理适配器。物理流程说明见 ROBOT.md，不能将视觉 complete 解释为整个物理闭环通过。
+允许命令（分组形式，见 docs/ARCHITECTURE.md）：`scene validate/build/audit/render/scan-inspect/scan-register/scan-bake/fit-appearance/score/video`、`align calibrate/fit-camera`、`traj convert`、顶层 `freeze`。`asset list/show/check` 也在白名单内，但它们只读、不写输出文件（`asset check` 把报告打到 stdout），因此暂时不能作为 command 阶段使用。旧扁平写法（如 `build`、`calibrate`）在白名单检查前自动归一化为分组形式，既有 workflow.json 无需修改。无 shell 命令和硬件调用。Newton/xarm7 回放和 LeRobot 导入继续使用已有独立接口；当前 case-run 不自动调用会写入 case 的物理适配器。物理流程说明见 ROBOT.md，不能将视觉 complete 解释为整个物理闭环通过。
 
 每个 command 必须声明 `outputs`；`scene validate` 可以为空。`--out` 必须指向 `{out}` 下尚不存在的子路径，声明的输出也不得逃出 attempt。外部资产、mask、视频、JSON 引用的其他文件必须显式加入该阶段 `inputs`，或加入上游 files 阶段并建立依赖；**运行器不会递归猜测任意配置中的路径**。目录 inputs 会递归做哈希，拒绝符号链接。不要把 runs 或整个 case 作为输入，避免把生成物纳入自身指纹。
 

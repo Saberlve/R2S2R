@@ -40,3 +40,15 @@ resources/
 *.gltf
 *.mtl
 !examples/lab_reference/scanner/door_erase_mask.png
+
+# Object asset library: small, curated task objects shared across tasks (assets/README.md).
+# A deliberate, scoped exception to the rules above -- keep it narrow. The permitted formats,
+# the 2MB per-file cap and the textures/ confinement are enforced by tools/check_git_payload.py;
+# these negations must stay BELOW every extension rule above (gitignore takes the last match),
+# and no rule may exclude the assets/ directory itself, since nothing can be re-included inside
+# an excluded directory.
+!assets/**/*.glb
+!assets/**/*.gltf
+!assets/**/*.bin
+!assets/**/textures/*.png
+!assets/**/textures/*.jpg

@@ -24,14 +24,26 @@ def test_legacy_verbs_normalize_to_grouped_form():
     assert cli.normalize_command(['freeze', '--scene', 's']) == ['freeze', '--scene', 's']
 
 
+def test_group_verbs_are_unique_across_groups():
+    # LEGACY flattens every group's verbs into one mapping, so a verb declared by two groups
+    # would silently rebind the earlier group's flat alias (e.g. `r2s validate`).
+    seen = {}
+    for group, verbs in cli.GROUP_COMMANDS.items():
+        for verb in verbs:
+            assert verb not in seen, '%s is declared by both %s and %s' % (verb, seen.get(verb), group)
+            seen[verb] = group
+
+
 def test_allowlist_accepts_grouped_and_top_level_only():
     assert cli.allowlisted(['scene', 'render'])
     assert cli.allowlisted(['align', 'calibrate'])
     assert cli.allowlisted(['traj', 'convert'])
+    assert cli.allowlisted(['asset', 'check'])
     assert cli.allowlisted(['freeze'])
     assert not cli.allowlisted(['render'])
     assert not cli.allowlisted(['scene', 'draft-model'])
     assert not cli.allowlisted(['tactile', 'describe'])
+    assert not cli.allowlisted(['asset', 'unknown'])
     assert not cli.allowlisted(['scene', 'unknown'])
     assert not cli.allowlisted([])
 

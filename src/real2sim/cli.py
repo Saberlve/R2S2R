@@ -9,7 +9,10 @@ from .contracts import load,save,validate_scene,profile_id,pixel_transform,sha
 SCENE_COMMANDS=('validate','build','audit','render','scan-inspect','scan-register','scan-bake','fit-appearance','score','video')
 ALIGN_COMMANDS=('calibrate','fit-camera')
 TRAJ_COMMANDS=('convert',)
-GROUP_COMMANDS={'scene':SCENE_COMMANDS,'align':ALIGN_COMMANDS,'traj':TRAJ_COMMANDS}
+# Verb names must stay unique across groups: LEGACY flattens them into one mapping, so a
+# duplicate (e.g. `asset validate`) would silently steal the flat alias `r2s validate`.
+ASSET_COMMANDS=('list','show','check')
+GROUP_COMMANDS={'scene':SCENE_COMMANDS,'align':ALIGN_COMMANDS,'traj':TRAJ_COMMANDS,'asset':ASSET_COMMANDS}
 LEGACY={verb:group for group,verbs in GROUP_COMMANDS.items() for verb in verbs}
 LEGACY['xarm7']='traj'
 
@@ -73,6 +76,10 @@ def build_parser():
  cp.add_parser('describe',help='Print the tactile contract')
  v=cp.add_parser('doctor',help='Check the Photon runtime item by item');v.add_argument('--python',default='python3',help='Target interpreter with tacsim dependencies')
  v=cp.add_parser('photon-render',help='Photon offline tactile render (synthetic stimulus)');v.add_argument('config');v.add_argument('--out',required=True);v.add_argument('--python',required=True,help='Existing Python 3.10 with tacsim deps; do not install/replace Newton')
+ d=sub.add_parser('asset',help='Committed object asset library under assets/');dp=d.add_subparsers(dest='verb',required=True)
+ v=dp.add_parser('list',help='List the objects in the library (a listing; `check` is the gate)')
+ v=dp.add_parser('show',help='Print one object spec and its resolved geometry');v.add_argument('id')
+ v=dp.add_parser('check',help='Validate every object; exit 2 on a bad asset')
  v=sub.add_parser('case-init');v.add_argument('case');v.add_argument('--cycles-python',help='Existing Python with bpy; defaults to R2S_CYCLES_PYTHON, else the submodule render_cycles environment')
  v=sub.add_parser('case-run');v.add_argument('case');v.add_argument('--retry-failed',action='store_true')
  v=sub.add_parser('case-status');v.add_argument('case')
@@ -192,6 +199,17 @@ def main(argv=None):
    worker=pathlib.Path(__file__).parent/'tactile/photon_worker.py'
    subprocess.run([a.python,str(worker),str(pathlib.Path(a.config).resolve()),str(out)],check=True)
    return
+ if a.group=='asset':
+  from . import assets
+  if a.verb=='list':
+   report=assets.validate_library();print(json.dumps({'root':report['root'],'objects':report['objects'],'errors':report['errors']},ensure_ascii=False,indent=2));return
+  if a.verb=='show':
+   directory=assets.object_dir(assets.library_root(),a.id)
+   if not (directory/'asset.json').is_file():raise SystemExit('No such object asset: '+a.id)
+   doc=assets.load_asset(directory/'asset.json',directory);out={'asset':doc,'directory':str(directory),'mesh':None}
+   if doc['geometry']['kind']=='mesh':out['mesh']=str(assets.mesh_path(doc,directory,must_exist=True))
+   print(json.dumps(out,ensure_ascii=False,indent=2));return
+  report=assets.validate_library();print(json.dumps(report,ensure_ascii=False,indent=2));sys.exit(0 if report['passed'] else 2)
  if a.group=='run':
   from .runner import run
   run(a.plan,a.out);return

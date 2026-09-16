@@ -113,7 +113,7 @@ $PY tools/environment_snapshot.py --check environment/newton-source-snapshot.jso
 
 ## 外部资源（NAS）
 
-渲染结果、录像、扫描、模型、数据集不进 Git，统一放在 NAS：
+渲染结果、录像、扫描、模型、数据集不进 Git，统一放在 NAS（例外的只有仓库级物体资产库 `assets/`，限制见 [RESOURCES.md](RESOURCES.md)）：
 
 ```text
 /run/determined/NAS1/public/wangshuxun/r2s2r_resources

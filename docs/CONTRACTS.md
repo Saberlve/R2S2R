@@ -37,6 +37,16 @@ Asset必须有id、role、kind、T_world_object、closed_required、confidence�
 
 评分输入：同尺寸RGB与固定二值mask（>127有效）；禁止自动resize。mask应合并实拍有效区、渲染valid_mask，并排除线缆/不建模装置等。SSIM只在7×7完全有效的窗口中心评分。默认loss为0.5 MAE+0.5(1-SSIM)；显式启用LPIPS时才使用0.5/0.25/0.25，记录完整定义，不跨定义对比loss。LPIPS依赖预缓存权重，禁止自动下载；mask边缘感受野仍有限制，报告协议。
 
+## 物体资产库 `assets/`
+
+跨任务复用的物体规格放在 `assets/<object_id>/asset.json`，**目录名即 `id`**，schema 为 `src/real2sim/schemas/asset.schema.json`（拒绝未知字段）。单位与其他部分一致：米、千克、秒、无量纲摩擦系数。
+
+必填 `schema_version="1.0"`、`id`、`role`、`geometry`、`provenance`；`physics`、`visual`、`collision` 可选。**缺省表示"尚未确定"，不是默认值**：需要它的消费者必须拒绝该物体，不得自行补一个数。`mass_kg` > 0、`friction` ≥ 0；`inertia_diagonal_kg_m2` 缺省时不在库里重复公式，以 xArm7 适配器 `physics_model.py` 的 box 公式为准。
+
+`geometry.kind="box"` 必须有正 `size_m`（实测长方体）；`kind="mesh"` 必须有 `path`，相对 `asset.json` 解析，只接受 GLB/GLTF，且解析结果必须落在本物体目录内——越界路径和符号链接一律拒绝。`provenance.confidence` 沿用 `measured|estimated|model`，估计值不得标为 `measured`。
+
+字段集尚未定稿。新增**可选**字段不改变 `schema_version`；把可选改成必填、或改变单位与语义，属于版本升级，必须同时改 schema、校验和本文档。本轮只定义库本身，`scene.json` 与 task.json 按 id 引用尚未接通。
+
 ## 轨迹与数据
 
 规范输入目录：manifest.json明确 `joint_unit=rad,time_unit=s,gripper_convention="0=open,1=closed"`；每episode一个NPZ，必须有：
