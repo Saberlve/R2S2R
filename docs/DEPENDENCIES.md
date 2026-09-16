@@ -43,7 +43,9 @@ assimp-py==1.0.8
 
 Data-MechanicSim 已在它的 `pyproject.toml` 里用 `tactile` 依赖组（并挂进 `default-groups`）固定这些版本。tacsim 自己的 `benchmark` 组**不参与传递依赖**（其 `pyproject.toml` 明确写了 "Consumers of tacsim only get `[project.dependencies]`"），所以必须在消费方重复声明，否则 `uv sync` 会把它们清掉。
 
-> ⚠️ **不要对 Data-MechanicSim 直接跑 `uv sync`。** 当前的共享 venv 里 `_editable_impl_tactile_benchmark.pth` / `_editable_impl_newton_gen.pth` 是被手工指向 `Data-MechanicSim-wt-uipc-collision` 工作树的（同目录留有 `.bak`）。`uv sync` 会按 `[tool.uv.sources]` 把它们改回 `Data-MechanicSim/third_party/tacsim`，而那一份停在 `b31ed28`，**没有** `third_party/xense_photon/`，Photon 会因此失效。需要同步环境时先确认这一点。
+`uv sync` 在这个仓库里是安全的：`_editable_impl_tactile_benchmark.pth` 应指向 `Data-MechanicSim/third_party/tacsim`，也就是 `[tool.uv.sources]` 声明的那份，而它现在位于 `d5ce700`（含 bundle）。同步后用 `r2s tactile doctor` 确认解析路径即可。
+
+> ⚠️ **不要把 `.venv` 提交进 Git。** 它已在 `.gitignore` 里，但 ignore 对**已跟踪**的文件无效。历史上有过一次教训：一个 worktree 把 `.venv` 作为**绝对路径符号链接**提交了，checkout 到另一个 worktree 后变成指向自身的自环，把真实的虚拟环境目录顶掉。若发现 `.venv` 出现在 `git ls-files` 里，先 `git rm --cached .venv` 再用 `uv sync` 重建。
 
 ### 自检
 
