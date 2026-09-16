@@ -20,7 +20,14 @@ NAS 不会随 Git 下载，需要有对应挂载和读权限。资源布局和�
 
 **本仓库不自包含。** 它只有流程代码、schema 和配置样例；光 clone 下来跑不了任何一条命令。clone 之前先确认这三项都存在：
 
-1. **Data-MechanicSim** 的 checkout —— 提供 Newton 工程、机器人资产和触觉仿真库 tacsim。本仓库**不**通过子模块或 pip 依赖获取它：tacsim 是内网 Git、无 LICENSE 的内部代码，且已由你使用的解释器安装，所以本仓库既不携带副本，也不向 `sys.path` 注入路径。`--recursive` 不需要（本仓库没有子模块）。获取方式和版本下限见 [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md)。
+1. **Data-MechanicSim** 的 checkout —— 提供 Newton 工程、机器人资产和触觉仿真库 tacsim。内网地址 `https://git.weiyantech.cn/Worlddynamics/Data-MechanicSim.git`，**它自带子模块所以要 `--recursive`**：
+
+   ```bash
+   git clone --recursive https://git.weiyantech.cn/Worlddynamics/Data-MechanicSim.git
+   export R2S_NEWTON_PROJECT="$(cd Data-MechanicSim && pwd)"
+   ```
+
+   本仓库**不**把 DMS 当子模块、也不把它写成 pip 依赖：tacsim 是内网 Git、无 LICENSE 的内部代码，且已由你使用的解释器安装，所以本仓库既不携带副本，也不向 `sys.path` 注入路径（`--recursive` 对本仓库本身不需要 —— 它没有子模块）。版本要求与故障排查见 [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md)。
 2. **NAS 资源挂载** —— 渲染结果、录像、扫描、模型、数据集都在 NAS 上，不随 Git 下载，见 [docs/RESOURCES.md](docs/RESOURCES.md)。
 3. **`R2S_*` 运行时路径** —— 七个路径全部来自环境变量，没有配置文件；缺任何一个命令会直接报出变量名。照抄 `examples/site.example.env` 改成自己的 `site.local.env`（Git 外）再载入。
 

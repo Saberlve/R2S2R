@@ -7,18 +7,31 @@
 | 仓库 | 作用 | 获取方式 |
 |---|---|---|
 | **R2S2R**（本仓库） | 流程代码、schema、配置样例 | `git clone https://github.com/Saberlve/R2S2R.git`。**不需要 `--recursive`**：本仓库没有子模块 |
-| **Data-MechanicSim** | Newton 工程、机器人资产、`newton_gen` 适配代码，以及触觉仿真库 **tacsim** | 内网 Git，向维护者索取地址；用 `R2S_NEWTON_PROJECT` 显式声明路径 |
+| **Data-MechanicSim** | Newton 工程、机器人资产、`newton_gen` 适配代码，以及触觉仿真库 **tacsim** | 内网 Git：`https://git.weiyantech.cn/Worlddynamics/Data-MechanicSim.git`（需内网访问或 VPN 与账号，见下） |
 | **tacsim**（Data-TacSim） | Photon 触觉仿真后端 | 已由 Data-MechanicSim 作为 `third_party/tacsim` 提供；**本仓库不再单独持有** |
 
 `tacsim` 是**无 LICENSE 的内部代码**，不得对外再分发；其厂商运行时包 xense-sim4.5 同样专有。来源与许可记录见 [PROVENANCE.md](PROVENANCE.md)。
 
-### tacsim 的版本下限
+### 拿到 Data-MechanicSim
 
-**必须 ≥ `d5ce700`（"Move xense sdk into repo"）。** 该提交把裁剪过的厂商运行时（约 20 MB）提交进 `third_party/xense_photon/`，使 tacsim 从纯 clone 即可用。更早的版本要求手工部署一套 1.7 GB 的厂商 dist，那份已随本仓库的去重一并删除。
+它自带两个子模块（`third_party/newton`、`third_party/tacsim`），所以**要带 `--recursive`**：
 
 ```bash
-git -C <Data-MechanicSim>/third_party/tacsim log --oneline -1   # 应 >= d5ce700
+git clone --recursive https://git.weiyantech.cn/Worlddynamics/Data-MechanicSim.git
+export R2S_NEWTON_PROJECT="$(cd Data-MechanicSim && pwd)"   # 写进你的 site.local.env
 ```
+
+不在内网时这个地址解析不了 —— 换 VPN，或向维护者索取一份可访问的镜像/打包。放哪儿都可以，`R2S_NEWTON_PROJECT` 指向它即可；**不要为了本仓库再复制一份 DMS**，那会让 tacsim 出现第二份。
+
+克隆完自查（`--recursive` 已经会带到正确版本）：
+
+```bash
+git -C "$R2S_NEWTON_PROJECT/third_party/tacsim" log --oneline -1   # 应 >= d5ce700
+```
+
+### tacsim 的版本下限
+
+**必须 ≥ `d5ce700`（"Move xense sdk into repo"）。** 该提交把裁剪过的厂商运行时（约 20 MB）提交进 `third_party/xense_photon/`，使 tacsim 从纯 clone 即可用。更早的版本要求手工部署一套 1.7 GB 的厂商 dist，那份已随本仓库的去重一并删除。Data-MechanicSim 的 gitlink 已钉在 `d5ce700`，所以 `--recursive` 克隆拿到的就是对的；若你的 checkout 更旧，在那里 `git fetch origin && git merge --ff-only origin/master`。
 
 ## 触觉（Photon）的环境要求
 
