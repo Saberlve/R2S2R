@@ -157,7 +157,13 @@ def build(
         engine=engine, fps=30, sim_substeps=sim_substeps, contact_surface_observer=False
     )
     if tactile_config is not None:
-        cfg.fps = round(tactile_config["control_hz"])
+        # The tactile clock IS the trajectory clock: one replayed frame is one control period,
+        # so cfg.fps has to be exactly control_hz.  Rounding here instead of refusing would make
+        # the replay integrate a different duration than the timestamps it records.
+        control_hz = tactile_config["control_hz"]
+        if not float(control_hz).is_integer():
+            raise ValueError("control_hz must be a whole number of frames per second")
+        cfg.fps = int(control_hz)
         cfg.force_log = True
         cfg.tactile_force_source = "native"
     table = ObjectSpec(

@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
+from scipy.spatial.transform import Rotation, Slerp
 
 from real2sim.contracts import rigid
 
@@ -22,6 +23,8 @@ BACKEND_ENGINE = {"hydroelastic": "mujoco"}
 PHOTON_GEL_SIZE_M = (0.0173, 0.02914, 0.003)
 PHOTON_DEPTH_SHAPE = (100, 64)
 PHOTON_RGB_SHAPE = (700, 400, 3)
+# Every quaternion in this repository's episode schema is xyzw (see real2sim.traj.planner).
+QUATERNION_SUFFIX = "quat_xyzw"
 
 
 def _finite_positive(value: Any, name: str) -> float:
@@ -80,6 +83,15 @@ def validate_tactile_config(doc: dict, *, engine: str | None = None) -> dict:
     if doc.get("calibration_status") != "uncalibrated":
         raise ValueError("this integration requires calibration_status='uncalibrated'")
     control_hz = _finite_positive(doc.get("control_hz", 30), "control_hz")
+    if not float(control_hz).is_integer():
+        # The physics clock is an integer frame rate, so a fractional control rate could only be
+        # rounded away -- and the recorded timestamps would then measure a different duration
+        # than the replay integrated.
+        raise ValueError(
+            "control_hz must be a whole number of frames per second: the physics clock cannot "
+            "run at a fractional rate"
+        )
+    control_hz = int(control_hz)
     chunk_frames = int(doc.get("chunk_frames", 64))
     if chunk_frames < 1:
         raise ValueError("chunk_frames must be positive")
@@ -106,24 +118,64 @@ def validate_tactile_config(doc: dict, *, engine: str | None = None) -> dict:
     return out
 
 
+def is_quaternion_field(name: str) -> bool:
+    """Whether a frame-indexed array holds rotations, so it must be sampled along the arc."""
+    if name == QUATERNION_SUFFIX or name.endswith("_" + QUATERNION_SUFFIX):
+        return True
+    if "quat" in name:
+        raise ValueError(
+            f"{name!r} looks like a quaternion but is not {QUATERNION_SUFFIX!r}; convert it "
+            "to the episode order before resampling rather than blending its components"
+        )
+    return False
+
+
+def _slerp(value: np.ndarray, time: np.ndarray, target: np.ndarray) -> np.ndarray:
+    """Sample a rotation track on the control clock, always along the shortest arc.
+
+    Blending quaternions component by component is not interpolation: two encodings of one
+    attitude (q and -q) cancel at the midpoint, and the result is not a rotation at all.
+    """
+    quat = value.reshape(len(time), 4).astype(float)
+    if not np.isfinite(quat).all() or np.any(np.linalg.norm(quat, axis=1) <= 0):
+        raise ValueError("quaternion track must be finite and non-zero")
+    # Slerp refuses to extrapolate.  The completed final period is a held sample by
+    # construction, so clamping the query is the same answer the interpolator would give.
+    sampled = Slerp(time, Rotation.from_quat(quat))(
+        np.clip(target, time[0], time[-1])
+    ).as_quat()
+    return sampled.reshape((len(target),) + value.shape[1:])
+
+
 def resample_trajectory(arrays: dict[str, np.ndarray], control_hz: float) -> tuple[dict, dict]:
-    """Resample every frame-indexed numeric array to a uniform control clock."""
+    """Resample every frame-indexed numeric array to a uniform control clock.
+
+    Rotations are sampled along the shortest arc; every other numeric field is linear.
+
+    The grid covers a whole number of control periods.  The replay advances exactly one period
+    per frame, so a short trailing frame would be recorded as a fraction of the time that was
+    actually integrated.  The final period is therefore completed by holding the last sample,
+    and the report states how much was held rather than leaving it to be inferred.
+    """
     if "time" not in arrays:
         raise ValueError("trajectory is missing time")
     time = np.asarray(arrays["time"], dtype=float)
     if time.ndim != 1 or len(time) < 2 or not np.isfinite(time).all() or np.any(np.diff(time) <= 0):
         raise ValueError("trajectory time must be finite and strictly increasing")
     dt = 1.0 / _finite_positive(control_hz, "control_hz")
-    count = int(np.floor((time[-1] - time[0]) / dt + 1e-9)) + 1
-    target = time[0] + np.arange(count) * dt
-    if target[-1] < time[-1] - dt * 1e-6:
-        target = np.r_[target, time[-1]]
+    periods = int(np.ceil((time[-1] - time[0]) / dt - 1e-9))
+    target = time[0] + np.arange(periods + 1) * dt
     uniform_input = bool(np.allclose(np.diff(time), np.diff(time)[0], rtol=1e-6, atol=1e-9))
     out: dict[str, np.ndarray] = {}
     for name, value in arrays.items():
         value = np.asarray(value)
         if value.ndim == 0 or len(value) != len(time) or not np.issubdtype(value.dtype, np.number):
             out[name] = value.copy()
+            continue
+        if is_quaternion_field(name):
+            if value.shape[1:] != (4,):
+                raise ValueError(f"{name} must hold four components per frame, got {value.shape}")
+            out[name] = _slerp(value, time, target)
             continue
         flat = value.reshape(len(time), -1)
         sampled = np.stack([np.interp(target, time, flat[:, i]) for i in range(flat.shape[1])], axis=1)
@@ -133,7 +185,9 @@ def resample_trajectory(arrays: dict[str, np.ndarray], control_hz: float) -> tup
         "input_frames": len(time), "output_frames": len(target),
         "input_uniform": uniform_input, "resampled": not (
             len(target) == len(time) and np.allclose(target, time, rtol=0, atol=1e-9)
-        ), "control_hz": float(control_hz),
+        ), "control_hz": float(control_hz), "frame_dt_s": dt,
+        "duration_s": float(target[-1] - target[0]),
+        "trailing_hold_s": max(0.0, float(target[-1] - time[-1])),
     }
 
 

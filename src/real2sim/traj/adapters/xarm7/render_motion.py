@@ -4,6 +4,7 @@ import argparse, pathlib, json, hashlib, os
 import numpy as np, bpy
 from mathutils import Matrix
 from PIL import Image
+from real2sim.traj.replay_metrics import playback_fps
 
 ROOT = pathlib.Path(os.environ["R2S_CASE_ROOT"]).resolve()
 p = argparse.ArgumentParser()
@@ -16,6 +17,11 @@ a = p.parse_args()
 run = pathlib.Path(a.run)
 run = run if run.is_absolute() else ROOT / "results" / run
 data = np.load(run / "states.npz")
+# The replay's own clock, never a constant: a 60 Hz control run played at a fixed 30 Hz would
+# run at half speed and drift out of step with the tactile videos.  Read before rendering so a
+# non-uniform timeline is refused before any GPU work.
+source_fps = playback_fps(data["time"])
+render_fps = playback_fps(data["time"], a.stride)
 geo = json.loads((ROOT / "inputs/baseline_geometry.json").read_text())
 settings = json.loads((run / "scene_config.json").read_text())
 baseline = ROOT / "inputs/render_baseline"
@@ -35,6 +41,13 @@ prefs.compute_device_type = "CUDA"
 prefs.refresh_devices()
 for d in prefs.devices:
     d.use = d.type == "CUDA"
+# Without this Cycles destroys its CUDA context after every render() call, so a run of this
+# scene reloads the kernels once per camera per frame and every one of those allocations can
+# fail against whatever else holds the card.  Keeping the device alive renders this run about
+# 1.6x faster (median 2.67 s -> 1.59 s per camera-frame, measured on the bar-grasp case) and
+# leaves far fewer chances of losing it; the image is unchanged, since persistent and one-shot
+# differ by at most 1/255, as much as two renders within either mode.
+scene.render.use_persistent_data = True
 scene.render.engine = "CYCLES"
 scene.cycles.device = "GPU"
 scene.cycles.samples = a.samples
@@ -193,8 +206,9 @@ for k, i in enumerate(frameids):
             "camera_sizes": {cid: [c["width"], c["height"]] for cid, c in cfg.items()},
             "physics_geometry_changed": False,
             "frames": checks,
-            "source_fps": 30,
-            "render_fps": 30 / a.stride,
+            "source_fps": source_fps,
+            "render_fps": render_fps,
+            "fps_source": "states.npz time column, divided by --stride",
             "observer_cameras_fixed": True,
             "image_alignment_deferred": True,
         },

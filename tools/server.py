@@ -612,28 +612,36 @@ def main():
                     env,
                     out / "render.log",
                 )
-                run(
-                    [
-                        site["ffmpeg"],
-                        "-n",
-                        "-hide_banner",
-                        "-loglevel",
-                        "error",
-                        "-framerate",
-                        str(30 / a.stride),
-                        "-i",
-                        sim / "render/three_views_%06d.png",
-                        "-c:v",
-                        "libx264",
-                        "-crf",
-                        "19",
-                        "-pix_fmt",
-                        "yuv420p",
-                        out / "ThreeViews.mp4",
-                    ],
-                    env,
-                    out / "encode.log",
-                )
+                # The renderer derives its rate from the saved timestamps, and this encoder uses
+                # that number: a fixed 30 Hz would play a 60 Hz control run at half speed.
+                render_fps = load(sim / "render/manifest.json").get("render_fps")
+                if not render_fps:
+                    receipt["three_views_video"] = (
+                        "not encoded: the render has too few frames to have a playback rate"
+                    )
+                else:
+                    run(
+                        [
+                            site["ffmpeg"],
+                            "-n",
+                            "-hide_banner",
+                            "-loglevel",
+                            "error",
+                            "-framerate",
+                            str(render_fps),
+                            "-i",
+                            sim / "render/three_views_%06d.png",
+                            "-c:v",
+                            "libx264",
+                            "-crf",
+                            "19",
+                            "-pix_fmt",
+                            "yuv420p",
+                            out / "ThreeViews.mp4",
+                        ],
+                        env,
+                        out / "encode.log",
+                    )
             receipt["simulation_report"] = str(sim / "report.json")
             receipt["note"] = (
                 "Offline generated trajectory. Short frame runs are smoke tests, not grasp success or real robot validation."
