@@ -1,0 +1,19 @@
+{
+  "confirmed_board_and_wrist_camera": true,
+  "robot_ip": "192.168.1.245",
+  "board": {
+    "squares_x": 5,
+    "squares_y": 7,
+    "dictionary": "DICT_5X5_100",
+    "square_mm": 35.0,
+    "marker_mm": 25.0,
+    "legacy": false
+  },
+  "camera": {
+    "backend": "realsense",
+    "serial": "242622070583",
+    "width": 1920,
+    "height": 1080,
+    "fps": 15
+  }
+}

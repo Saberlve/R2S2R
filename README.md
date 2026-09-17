@@ -183,7 +183,7 @@ xvfb-run -a "$PY" -m real2sim.cli tactile photon-render \
 
 必须先按实际 link-to-mesh 关系准备 binding。用 `--stride` 抽取状态会改变渲染 FPS，不改变物理时间。
 
-上面这些命令走 `PYTHONPATH="$PWD/src"`，依赖由主环境提供。仓库自身还有几个可选依赖组（`calibration`=opencv、`metrics`=scikit-image、`dataset`=pyarrow、`test`=pytest），缺哪个就 `pip install -e '.[组名]'` 补哪个。
+上面这些命令走 `PYTHONPATH="$PWD/src"`，依赖由主环境提供。仓库自身还有几个可选依赖组（`calibration`=opencv、`handeye`=flask+pyrealsense2、`metrics`=scikit-image、`dataset`=pyarrow、`test`=pytest），缺哪个就 `pip install -e '.[组名]'` 补哪个。`handeye` 是 `src/real2sim/calibrate/` 那套手眼标定工具的网页与腕部相机依赖；跑完整测试套件还要带上 `calibration` 和 `handeye` 两组。
 
 ## 新场景怎么做
 

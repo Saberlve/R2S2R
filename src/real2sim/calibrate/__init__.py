@@ -1,0 +1,1 @@
+"""Guided hand-eye calibration: ChArUco capture and solve, base-frame pose, and the fixed-camera extrinsic. See README.md in this directory; the offline tests live in tests/test_handeye.py and tests/test_gui.py."""

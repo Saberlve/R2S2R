@@ -9,6 +9,9 @@ requires-python = ">=3.10"
 dependencies = ["numpy", "scipy", "Pillow", "jsonschema"]
 [project.optional-dependencies]
 calibration = ["opencv-python-headless"]
+# src/real2sim/calibrate: flask serves the guided web UI, pyrealsense2 opens the wrist camera.
+# The rest of that tool is numpy/scipy/opencv, covered by the core deps and `calibration`.
+handeye = ["flask", "pyrealsense2"]
 metrics = ["scikit-image"]
 dataset = ["pyarrow"]
 test = ["pytest"]
@@ -18,6 +21,8 @@ r2s = "real2sim.cli:main"
 where = ["src"]
 [tool.setuptools.package-data]
 real2sim = ["schemas/*.json", "workers/*.py", "traj/adapters/xarm7/*.py"]
+# gui.py reads both from its own directory at runtime.
+"real2sim.calibrate" = ["gui.html", "config.json"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 # Keep `pytest -q` (as documented in README) scoped to this repository's suite. Without this,

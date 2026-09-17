@@ -4,7 +4,7 @@
 
 ## 当前适用范围
 
-xArm7、7个arm自由度、G2平行夹爪、5个mimic约束、TCP `[0,0,0.172]m`。CLI遇到不同TCP直接拒绝。其他TCP/夹爪/机器人要实现与验证新的adapter，不能仅改视觉网格。
+xArm7、7个arm自由度、G2平行夹爪、5个mimic约束、自定义夹爪 TCP 为左右 sensor 接触中心的中点，方向沿用 link7，偏移随开合由当前 URDF 推导。旧 TCP 轨迹必须重新规划，不能仅改标签或视觉网格。
 
 只驱动夹爪leader，从动关节由mimic约束驱动。normalized→开口→角度使用几何反解，不直接套用线性角度。当前力矩/响应仍是估算，不能解释为真实SDK力百分比。
 
@@ -24,16 +24,16 @@ case/
   reports/
 ```
 
-scene_config必需：`T_sim_base`（4×4）、`tcp_offset_m=[0,0,.172]`、`table_matrix`、`table_size_m`；`bar`含size_m、mass_kg、position_m、quaternion_xyzw、friction、estimated；可选controller含arm_kp/arm_kd/gripper_kp/gripper_kd/gripper_effort_limit_Nm。尺寸与摩擦须记录来源/不确定范围。
+scene_config必需：`T_sim_base`（4×4）、`table_matrix`、`table_size_m`；`bar`含size_m、mass_kg、position_m、quaternion_xyzw、friction、estimated；可选controller含arm_kp/arm_kd/gripper_kp/gripper_kd/gripper_effort_limit_Nm。尺寸与摩擦须记录来源/不确定范围。
 
-URDF必须是该7轴+G2链，使用控制器标定joint origins；所有mesh路径可解析。官方物理链与视觉网格通过固定T_body_object绑定，禁止为了视觉匹配扭曲物理骨架。不要复用没有对应来源hash的碰撞缓存；新case初次构建生成缓存。
+URDF必须是该7轴+G2链，使用控制器标定joint origins；所有mesh路径可解析。官方物理链与视觉网格通过固定T_body_object绑定，禁止为了视觉匹配扭曲物理骨架。服务器每次把当前 URDF 和网格物化到新 case，并移除旧的 `link_tcp/joint_tcp` 与碰撞缓存；不生成或复用可跨 run 的碰撞缓存。
 
 ```bash
 export PYTHONPATH=/path/to/real2sim-pipeline/src
 PY=/path/to/Data-MechanicSim/.venv/bin/python
 $PY -m real2sim.cli traj xarm7 --case /path/to/case --newton-project /path/to/Data-MechanicSim validate_kinematics -- --episode 0
-$PY -m real2sim.cli traj xarm7 --case /path/to/case --newton-project /path/to/Data-MechanicSim simulate_replay -- --mode joint --episode 0 --tag joint_check
-$PY -m real2sim.cli traj xarm7 --case /path/to/case --newton-project /path/to/Data-MechanicSim simulate_replay -- --mode eef --episode 0 --bar --tag eef_contact
+$PY -m real2sim.cli traj xarm7 --case /path/to/case --newton-project /path/to/Data-MechanicSim simulate_replay -- --mode joint --trajectory /path/to/generated_grasp.npz --tag joint_check
+$PY -m real2sim.cli traj xarm7 --case /path/to/case --newton-project /path/to/Data-MechanicSim simulate_replay -- --mode eef --trajectory /path/to/generated_grasp.npz --bar --tag eef_contact
 ```
 
 先跑所有episode运动学，再做无接触跟踪，再做接触。标定/关节范围必须覆盖本次轨迹。生成示例`generate_grasp`使用episode000的初始姿态和配置中的单个box，不是通用任务规划器；`import_eef`接收自主TCP轨迹。当前simulate_replay支持单桌+单box物理任务；多物体、其他碰撞几何需要扩展SceneSpec adapter后测试。

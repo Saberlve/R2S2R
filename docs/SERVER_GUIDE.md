@@ -100,7 +100,7 @@ patch 支持：
 ./r2s-server render --states /absolute/path/states.jsonl --gpu 1 --samples 16
 ```
 
-输出为 `OUTPUT/template/results/still/` 或 `motion/`，含三相机 PNG、拼接图与绑定验证。当前腕部与 B 均为640×480；Azure保留原来标定比例，三视角拼接时等比缩放并补边，不拉伸成新的相机内参。
+输出为 `OUTPUT/template/results/still/` 或 `motion/`，含三相机 PNG、拼接图与绑定验证。每个相机使用 runtime 中声明的原生分辨率；拼接图按原生宽度水平排列、顶部对齐并以黑色补齐高度，不缩放或改变相机内参。尺寸和拼接策略记录在 `render/manifest.json`。
 
 这里 `--states` 接受实验室 runtime 格式：每行 `objects[ObjectName].matrix_world` 和时间信息，由已验证 link-to-mesh 绑定生成。**不能直接传 NPZ、关节列表或通用 CLI 的 `T_world_objects` 状态。** 通用 `real2sim.cli scene render` 使用独立 schema，转换方法见 [机器人接口](ROBOT.md)。
 
@@ -109,13 +109,13 @@ patch 支持：
 ```bash
 # 短程功能检查，不代表抓取完成
 ./r2s-server simulate --gpu 1 --frames 90 --stride 30 --samples 4
-# 完整现有长条任务（481帧，30Hz，约16秒）
-./r2s-server simulate --gpu 1 --frames 481 --stride 15 --samples 16
+# 完整现有长条任务（331帧，30Hz，约11秒；默认生成 sensor-center TCP 轨迹）
+./r2s-server simulate --gpu 1 --frames 331 --stride 5 --samples 16
 # 只生成物理状态
-./r2s-server simulate --gpu 1 --frames 481 --no-render
+./r2s-server simulate --gpu 1 --frames 331 --no-render
 ```
 
-输入：已测量的126×33×33 mm 长条、当前抓取案例配置、控制器标定 URDF、G2 映射、固定基座/桌面变换和生成轨迹 `grasp_clearance.npz`。工具把工作输入复制到新 run，使用 `mujoco_fast`；`--engine mujoco` 可选择既有另一后端，但本轮新入口只对默认后端做了功能测试。
+输入：已测量的126×33×33 mm 长条、当前抓取案例配置、控制器标定 URDF、G2 映射、固定基座/桌面变换和生成轨迹 `generated_grasp.npz`。工具把工作输入复制到新 run，默认使用 `mujoco_fast`；触觉配置使用 `--engine mujoco` 的 Hydroelastic 后端。轨迹和报告统一声明 `tcp_definition: sensor_center`，旧的 `planning_frame.transform_file` 与固定 TCP 偏移入口不再接受。
 
 输出：
 
@@ -124,7 +124,7 @@ OUTPUT/
   receipt.json                # 参数、环境路径、退出结果
   simulation.log / render.log / encode.log
   case/scene_config.json      # 本次物理参数
-  case/results/eef_mujoco_fast_bar_server/
+  case/results/eef_<engine>_bar_server/
     states.npz                # Newton实际状态，米+xyzw四元数
     report.json / contacts.json
     trajectory_dry_run.jsonl

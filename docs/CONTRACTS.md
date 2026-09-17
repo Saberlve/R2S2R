@@ -92,3 +92,20 @@ Light为area光源，默认沿世界-Z照射；可用`target_m`指定照向的�
 ## 扫描与未知内参接口
 
 扫描的scan-register/scan-bake配置、坐标链、纹理覆盖mask、asset.glb及碰撞角色见[SCANNER_BACKGROUND.md](SCANNER_BACKGROUND.md)。未知内参的七参数fit-camera输入、点/线/正深度约束和候选输出见 `r2s align fit-camera`（配置 schema 与历史 Azure 案例见 `examples/lab_reference/azure/`）。两者与原有固定K的PnP是不同接口，不互相替代。
+
+## xArm7 自定义手指与 sensor TCP
+
+当前自定义夹爪规划、回放和离线导出统一使用 `tcp_definition="sensor_center"`。
+原点为当前 URDF 中 `custom_contact_L/R_fix` 安装点在世界坐标下的中点，轴向沿用
+`link7`。`T_flange_tcp` 随夹爪连杆开合而变，不再使用固定 172 mm 偏移。
+规划按每帧开合指令从 URDF 推导法兰目标；回放按实际左右手指 `body_q` 计算 TCP，
+不能用指令开合或目标 TCP 代替实际状态。NPZ 必须携带标量 `tcp_definition`，旧轨迹
+必须重新规划；旧 `planning_frame.transform_file` 入口已删除。实测控制器/手眼标定
+原始资料保留原来的坐标定义，不自动改写或声称真机 TCP 已更新。
+
+每侧 connector、fingertip、sensor 的碰撞几何必须属于对应 `left_finger/right_finger`，
+不增加独立自由度；触觉模式保留这六个刚性碰撞体，再添加 Photon 凝胶。
+当前物理 URDF 不得保留旧的固定 `link_tcp/joint_tcp`；服务器在新 run 中会主动清除它们。
+渲染执行仓库内 `render_motion.py`，按当前 runtime manifest 的六个 `custom_g2.bindings`
+更新配件和手指位姿，不执行 frozen case/src 的旧渲染脚本。缺少绑定、物体或 body label
+直接报错。碰撞与视觉形状源不互相替代；模型安装位置和材料参数仍非实测接触标定。
