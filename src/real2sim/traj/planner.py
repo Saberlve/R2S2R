@@ -85,13 +85,8 @@ def validate_task(spec: dict) -> dict:
     if not isinstance(fps, int) or isinstance(fps, bool) or not 1 <= fps <= 240:
         raise ValueError("fps: expected an integer in [1, 240]")
     planning_frame = spec.get("planning_frame")
-    if planning_frame is not None:
-        if (not isinstance(planning_frame, dict)
-                or set(planning_frame) != {"kind", "transform_file"}
-                or planning_frame.get("kind") != "sensor_center"
-                or not isinstance(planning_frame.get("transform_file"), str)
-                or not planning_frame["transform_file"].strip()):
-            raise ValueError("planning_frame requires kind=sensor_center and transform_file")
+    if planning_frame not in (None, {"kind": "sensor_center"}):
+        raise ValueError("TCP is sensor_center from the current robot; legacy transform_file is unsupported")
     return {"waypoints": normalized, "q_start_rad": q_start, "fps": fps,
             "planning_frame": planning_frame,
             "vel_limits_rad_s": spec.get("vel_limits_rad_s"),

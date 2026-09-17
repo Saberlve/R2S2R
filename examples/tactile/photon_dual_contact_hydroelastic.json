@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "sensor": "photon",
+  "contact_backend": "hydroelastic",
+  "mounts": {
+    "left": {"body": "left_finger", "T_body_sensor": [[1,0,0,0.00110338],[0,0,-1,-0.01601962],[0,1,0,0.14849588],[0,0,0,1]]},
+    "right": {"body": "right_finger", "T_body_sensor": [[1,0,0,-0.00110338],[0,0,1,0.01601962],[0,-1,0,0.14849588],[0,0,0,1]]}
+  },
+  "existing_contact_face_size_m": [0.0165, 0.02834386],
+  "physics": {"preset": "photon_hydroelastic_uncalibrated_v1"},
+  "photon": {"preset": "xense_g1_ws_vendor_fem_and_optics", "outputs": ["rgb", "depth", "marker_flow"]},
+  "parameters_source": {"physics": "unvalidated engineering preset", "photon": "packaged Xense Photon vendor bundle"},
+  "calibration_status": "uncalibrated",
+  "control_hz": 30,
+  "chunk_frames": 64
+}

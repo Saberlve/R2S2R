@@ -70,3 +70,27 @@ def test_the_example_env_file_only_sets_paths_that_have_no_default():
  text=(pathlib.Path(__file__).resolve().parents[1]/'examples/site.example.env').read_text()
  exported={line.split('=')[0].replace('export','').strip() for line in text.splitlines() if line.startswith('export')}
  assert exported=={'R2S_MEASURED_CASE','R2S_REFERENCE_TEMPLATE'}
+
+def test_simulate_executes_repository_adapter_not_frozen_case_copy():
+ text=(pathlib.Path(__file__).resolve().parents[1]/'tools/server.py').read_text()
+ assert "adapter=ROOT/'src/real2sim/traj/adapters/xarm7/simulate_replay.py'" in text
+ assert "run([py,case/'src/simulate_replay.py'" not in text
+
+def test_current_robot_is_materialized_with_local_meshes(tmp_path):
+ template=tmp_path/'run'/'runtime';template.mkdir(parents=True)
+ robot=template.parent/'robot.urdf';mesh=template.parent/'finger.stl'
+ mesh.write_bytes(b'mesh')
+ robot.write_text('<robot name="r"><link name="finger"><collision name="c"><geometry><mesh filename="finger.stl"/></geometry></collision></link></robot>')
+ (template/'runtime_manifest.json').write_text(json.dumps({'custom_g2':{'physics_urdf':'../robot.urdf'}}))
+ case=tmp_path/'case';(case/'inputs').mkdir(parents=True)
+ (case/'inputs/previous_unstamped_collision_cache.urdf').write_text('legacy')
+ target=server.copy_current_physics_robot(template,case)
+ assert target==case/'inputs/xarm7_calibrated.urdf'
+ text=target.read_text();assert 'current_robot/' in text and str(mesh) not in text
+ assert not (case/'inputs/previous_unstamped_collision_cache.urdf').exists()
+
+def test_simulate_never_runs_frozen_renderer_or_default_old_trajectory():
+ text=(pathlib.Path(__file__).resolve().parents[1]/'tools/server.py').read_text()
+ assert "run([bpy,ROOT/'src/real2sim/traj/adapters/xarm7/render_motion.py'" in text
+ assert "run([bpy,case/'src/render_motion.py'" not in text
+ assert "else case/'results/grasp_clearance.npz'" not in text

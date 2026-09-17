@@ -15,7 +15,7 @@ from real2sim.traj.planner import (
     Infeasible, JointTrajectory, Waypoint, interpolate_waypoints, validate_limits, validate_task,
 )
 from real2sim.contracts import rigid, save, sha
-from real2sim.traj.planning_frame import PlanningFrame, recorded_tcp_poses
+from real2sim.traj.planning_frame import SensorTCP, recorded_tcp_poses
 
 
 def base_waypoints_to_sim(task, T_sim_base):
@@ -46,7 +46,7 @@ def solve(task_spec, out_dir):
     from trajectory_adapter import transform
 
     task = validate_task(json.loads(pathlib.Path(task_spec).read_text(encoding="utf-8")))
-    planning_frame = PlanningFrame(task["planning_frame"], pathlib.Path(task_spec).resolve().parent)
+    tcp = SensorTCP(ROOT)
     settings = json.loads((ROOT / "scene_config.json").read_text())
     B = rigid(np.array(settings["T_sim_base"], float), "T_sim_base")
     q0 = task["q_start_rad"]
@@ -68,14 +68,13 @@ def solve(task_spec, out_dir):
     newton.eval_fk(model, state.joint_q, state.joint_qd, state)  # joint_q is home_q, which equals q_start
     f = state.body_q.numpy()[flange]
     start = transform(f[:3], f[3:])
-    start[:3, 3] += start[:3, :3] @ np.array([0, 0, 0.172])
-    start = planning_frame.planning_pose(start, task["waypoints"][0].gripper)
+    start = start @ tcp.flange_transform(task["waypoints"][0].gripper)
     start_wp = Waypoint(tuple(start[:3, 3]), tuple(Rotation.from_matrix(start[:3, :3]).as_quat()),
                         task["waypoints"][0].gripper, 1e-6)
     sim_waypoints = [start_wp] + base_waypoints_to_sim(task, B)
     times, positions, quats, grippers = interpolate_waypoints(sim_waypoints, task["fps"])
 
-    po = ik.IKObjectivePosition(link_index=flange, link_offset=wp.vec3(0, 0, .172),
+    po = ik.IKObjectivePosition(link_index=flange, link_offset=wp.vec3(0, 0, 0),
                                 target_positions=wp.array([wp.vec3()], dtype=wp.vec3))
     ro = ik.IKObjectiveRotation(link_index=flange, link_offset_rotation=wp.quat_identity(),
                                 target_rotations=wp.array([wp.vec4(0, 0, 0, 1)], dtype=wp.vec4))
@@ -87,19 +86,19 @@ def solve(task_spec, out_dir):
     qs, errs, actual_tcp = [], [], []
     for planning_pos, planning_quat, gripper in zip(positions, quats, grippers):
         # Interpolate in sensor space first; convert each frame at its own opening.
-        target = planning_frame.tcp_target(_pose(planning_pos, planning_quat), gripper)
+        target = _pose(planning_pos, planning_quat) @ np.linalg.inv(tcp.flange_transform(gripper))
         pos, quat = target[:3, 3], Rotation.from_matrix(target[:3, :3]).as_quat()
         po.target_positions.assign(np.array([pos], np.float32))
         ro.target_rotations.assign(np.array([quat], np.float32))
         solver.step(q, q, iterations=40)
         v = q.numpy()[0]
         qs.append(v[:7].copy())
+        v[7:13] = tcp.drive(gripper)
         state.joint_q.assign(v)
         newton.eval_fk(model, state.joint_q, state.joint_qd, state)
-        f = state.body_q.numpy()[flange]
-        actual = transform(f[:3], f[3:])
-        actual[:3, 3] += actual[:3, :3] @ np.array([0, 0, 0.172])
-        actual_tcp.append(actual.copy())  # Original controller EEF, not sensor pose.
+        actual = tcp.actual_pose(state.body_q.numpy(), model.body_label)
+        actual_tcp.append(actual.copy())
+        pos, quat = planning_pos, planning_quat
         errs.append([np.linalg.norm(pos - actual[:3, 3]) * 1000,
                      Rotation.from_matrix(Rotation.from_quat(quat).as_matrix().T @ actual[:3, :3]).magnitude() * 180 / np.pi])
     errs = np.array(errs)
@@ -136,8 +135,8 @@ def solve(task_spec, out_dir):
         "max_fk_error_deg": fk_rot_deg,
         "limit_violations": violations,
         "generated_trajectory_not_real_contact_validation": True,
-        "planning_frame": planning_frame.metadata,
-        "eef_recording": "FK of saved joint q at unchanged controller TCP172; no sensor transform",
+        "planning_frame": tcp.metadata,
+        "eef_recording": "FK sensor midpoint of saved joint q and gripper opening",
     }
     return episode, report
 
@@ -165,8 +164,7 @@ def main():
         "gripper_convention": "0=open,1=closed", "tcp_frame": "robot_base",
         "quaternion": "xyzw", "source": "plan_trajectory",
         "task_sha256": sha(a.task),
-        "eef_definition": "controller_tcp",
-        "T_flange_tcp": [[1,0,0,0], [0,1,0,0], [0,0,1,.172], [0,0,0,1]],
+        "eef_definition": "sensor_center",
         "planning_frame": report["planning_frame"],
     })
     save(out / "plan_report.json", {"status": "planned", **report, "task_sha256": sha(a.task)})

@@ -1,6 +1,6 @@
 """General trajectory generation interfaces.
 
-Current implementation: real2sim.traj.adapters.xarm7 (Newton engine, xArm7 + G2 + TCP172).
+Current implementation: real2sim.traj.adapters.xarm7 (Newton engine, xArm7 + G2 + sensor-center TCP).
 These interfaces describe the surface that future planners and other engines plug into; this
 round adds no new implementation behind them.
 The trajectory data contract follows the episode NPZ schema in docs/CONTRACTS.md
@@ -15,7 +15,7 @@ ENGINE_REGISTRY = {
         "adapter": "real2sim.traj.adapters.xarm7",
         "status": "implemented",
         "planning": "real2sim.traj.planner + plan_trajectory.py (our own implementation, design informed by newton_gen.motion.planning, no runtime dependency on it)",
-        "hardware_guard": "xArm7 G2 TCP172 only; no real-robot commands",
+        "hardware_guard": "xArm7 G2 sensor-center TCP; no real-robot commands",
     },
     "tacsim_tactile": {
         "adapter": None,

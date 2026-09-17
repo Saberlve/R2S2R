@@ -10,21 +10,22 @@ from __future__ import annotations
 from typing import Protocol
 
 CONTRACT_DRAFT = {
-    "schema_version": "1.0-draft",
-    "status": "photon_integrated_offline_only",
+    "schema_version": "1.0",
+    "status": "contact_driven_photon_integration",
     "sensor": {
         "photon": {
             "model": "Xense G1-WS optical tactile sensor (marker-based, 20x11 marker grid)",
             "backend": "tacsim (Data-TacSim) resolved from the interpreter passed to --python + vendor package xense-sim4.5 (committed under that checkout's third_party/xense_photon)",
-            "integrated_path": "offline render_tensor: synthetic indentation -> depth_m (100x64) / rgb (700x400x3) / marker_flow",
-            "not_yet": "in-scene Newton integration (add_to_builder/drive/read_frame) is still to come",
+            "integrated_path": "physical replay -> hydroelastic gel state -> Photon RGB/depth/marker flow",
+            "gel_size_m": [0.0173, 0.02914, 0.003],
+            "outputs": {"depth": [100, 64], "rgb": [700, 400, 3], "marker_flow": "[...,2]"},
         },
         "taxel_grid": "tactile array dimensions [rows, cols]; each taxel reports normal and shear force (N)",
         "frame": "T_world_sensor is a rigid 4x4 (T_A_B convention, metres); checked with contracts.rigid",
         "mount": "fixed | body; body mounting follows the wrist mounting semantics of the camera contract (needs a per-frame pose)",
         "output": "per-frame taxel forces plus the total force and total torque; units N / N*m, time in seconds",
     },
-    "backends_planned": ["other tacsim backends (gsmini/etac)", "other open-source tactile simulators"],
+    "contact_backends": {"hydroelastic": "mujoco"},
     "notes": [
         "Simulated tactile output is not real-contact validation; reports must keep the simulation source and its uncertainty.",
         "Integration must not change a locked camera or base calibration; friction and other contact parameters follow the locking order in PIPELINE.md.",
